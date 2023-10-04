@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace CarcassEnemy
 {
+    //Unity Editor QoL thing
     public class CarcassParametersAsset : ScriptableObject
     {
         //Match fields from CarcassParameters

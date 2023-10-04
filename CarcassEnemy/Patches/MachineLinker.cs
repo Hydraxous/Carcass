@@ -6,16 +6,16 @@ using UnityEngine;
 
 namespace CarcassEnemy.Patches
 {
-
+    //Because EnemyIdentifier component is... *uniquely engineered*, here we force a Machine component to become a relay for interface behavior.
     [HarmonyPatch(typeof(Machine))]
     public static class MachineLinker
     {
-        private static HashSet<Machine> customEnemies = new HashSet<Machine>();
+        private static HashSet<Machine> machineRelays = new HashSet<Machine>();
         private static Dictionary<Machine, ICustomEnemy> links = new Dictionary<Machine, ICustomEnemy>();
 
         public static void ClearCache()
         {
-            customEnemies.Clear();
+            machineRelays.Clear();
             links.Clear();
         }
 
@@ -28,10 +28,11 @@ namespace CarcassEnemy.Patches
             if (!__instance.TryGetComponent<ICustomEnemy>(out ICustomEnemy enemy))
                 return true;
 
-            if (!customEnemies.Contains(__instance))
+            if (!machineRelays.Contains(__instance))
             {
-                customEnemies.Add(__instance);
+                machineRelays.Add(__instance);
                 links.Add(__instance, enemy);
+                //__instance.enabled = false; Dunno what effect this will cause, it works fine without doing this so...
                 return false;
             }
 
@@ -40,7 +41,7 @@ namespace CarcassEnemy.Patches
 
         private static bool IsCustom(Machine machine)
         {
-            return customEnemies.Contains(machine);
+            return machineRelays.Contains(machine);
         }
 
         [HarmonyPatch("Update"), HarmonyPrefix]
@@ -61,6 +62,7 @@ namespace CarcassEnemy.Patches
             if (!IsCustom(__instance))
                 return true;
 
+            //Pass logic to linked ICustomEnemy, and up the parameters
             links[__instance]?.GetHurt(new HurtEventData()
             {
                 target = target,
@@ -79,15 +81,10 @@ namespace CarcassEnemy.Patches
             if (!IsCustom(__instance))
                 return true;
 
+            //Pass logic to linked ICustomEnemy
             links[__instance]?.Instakill();
 
             return false;
-        }
-
-        [HarmonyPatch(nameof(Machine.CanisterExplosion)), HarmonyPrefix]
-        private static bool CanisterExplosion(Machine __instance)
-        {
-            return !IsCustom(__instance);
         }
 
         [HarmonyPatch(nameof(Machine.KnockBack)), HarmonyPrefix]
@@ -96,9 +93,16 @@ namespace CarcassEnemy.Patches
             if (!IsCustom(__instance))
                 return true;
 
+            //Pass logic to linked ICustomEnemy
             links[__instance]?.Knockback(force);
 
             return false;
+        }
+
+        [HarmonyPatch(nameof(Machine.CanisterExplosion)), HarmonyPrefix]
+        private static bool CanisterExplosion(Machine __instance)
+        {
+            return !IsCustom(__instance);
         }
 
         [HarmonyPatch("ReadyGib"), HarmonyPrefix]

@@ -41,7 +41,7 @@ namespace CarcassEnemy
         private float health;
         public float Health => health;
 
-        //conk-creet States
+        //conk-creet states
         public CarcassFloatAround FloatAround { get; } = new CarcassFloatAround();
         public CarcassIdle Idle { get; } = new CarcassIdle();
 
@@ -76,6 +76,7 @@ namespace CarcassEnemy
             this.target = target;
         }
 
+        //Meh
         public void TurnTowards(Vector3 point, float speed)
         {
             Vector3 pos = transform.position;
@@ -120,6 +121,7 @@ namespace CarcassEnemy
             GUI.skin.box.alignment = TextAnchor.UpperLeft;
 
             string stateName = (currentState == null) ? "NO_STATE" : currentState.GetType().Name;
+            stateName += $"\nHP:{health}";
             GUILayout.Box(stateName.TrimEnd('\n', '\r'));
         }
 
@@ -175,7 +177,7 @@ namespace CarcassEnemy
                 timer -= Time.deltaTime;
 
                 float interval = 1-(timer / time);
-                Vector3 newScale = Vector3.Lerp(scale,Vector3.zero,interval);
+                Vector3 newScale = Vector3.Lerp(scale,new Vector3(0,scale.y,0),interval);
                 transform.localScale = newScale;
             }
 

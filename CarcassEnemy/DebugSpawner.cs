@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace CarcassEnemy
 {
+
+    //Easy way to spawn in the enemy for testing.
+    //TODO add to spawn catalogue
     public class DebugSpawner : MonoBehaviour
     {
         private static GameObject carcassPrefab;
@@ -20,7 +23,6 @@ namespace CarcassEnemy
             if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMaskDefaults.Get(LMD.Environment), QueryTriggerInteraction.Ignore))
                 return;
 
-            //Spawn enemy at hit.point
             GameObject.Instantiate(GetPrefab(), hit.point+(hit.normal*0.1f), Quaternion.identity);
         }
 

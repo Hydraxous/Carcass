@@ -10,6 +10,8 @@ namespace CarcassEnemy
         private Transform target;
         private Rigidbody rb;
 
+        //TODO move to parameters asset for easy serialization
+
         private float direction;
         private float lateralGlideSpeed = 11f;
         private float verticalSpeed = 10f;
@@ -44,15 +46,12 @@ namespace CarcassEnemy
                 carcass.SetState(this);//Restart state bc nothing else exists rn.
         }
 
-        private float ResolveTargetDistance(Vector3 position, Vector3 targetPosition)
-        {
-            return Mathf.Sign(desiredTargetDistance - (targetPosition - position).XZ().magnitude);
-        }
-
         private Vector3 velocity;
 
         public override void OnFixedUpdate(Carcass carcass)
         {
+            //Controls hovering around motion.
+
             Vector3 travelVector = carcass.transform.right * direction;
 
             Vector3 targetPos = target.position;
