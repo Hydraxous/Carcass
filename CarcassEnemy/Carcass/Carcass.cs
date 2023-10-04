@@ -1,6 +1,7 @@
 ﻿using CarcassEnemy.AI;
 using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Text;
 using UnityEngine;
 
@@ -37,6 +38,9 @@ namespace CarcassEnemy
         //internal state
         private CarcassState defaultState => Idle;
 
+        private float health;
+        public float Health => health;
+
         //conk-creet States
         public CarcassFloatAround FloatAround { get; } = new CarcassFloatAround();
         public CarcassIdle Idle { get; } = new CarcassIdle();
@@ -45,6 +49,7 @@ namespace CarcassEnemy
         {
             if (components != null)
             {
+                health = Parameters.maxHealth;
                 components.Machine.health = Parameters.maxHealth;
                 foreach(GameObject go in components.Hitboxes)
                 {
@@ -81,22 +86,21 @@ namespace CarcassEnemy
             transform.rotation = newRotation;
         }
 
-        public void MoveTowards(Vector3 point, float speed)
-        {
-
-        }
-
-        public void Move(Vector3 delta)
-        {
-
-        }
-
         public float CalculateVerticalMoveDirection(Vector3 position, float desiredHeight)
         {
             if (!Physics.Raycast(position, Vector3.down, out RaycastHit hit, Mathf.Infinity, LayerMaskDefaults.Get(LMD.Environment), QueryTriggerInteraction.Ignore))
                 return -1f;
 
-            float distanceToDesiredHeight = (hit.point.y + desiredHeight) - position.y;
+            float targetHeight = hit.point.y + desiredHeight;
+
+
+            if (target != null)
+            {
+                targetHeight = Mathf.Max(targetHeight, target.position.y);
+            }
+
+
+            float distanceToDesiredHeight = targetHeight - position.y;
             return Mathf.Sign(distanceToDesiredHeight);
         }
 
@@ -121,8 +125,11 @@ namespace CarcassEnemy
 
         public void Instakill()
         {
-            //Switch to state dying
-            Destroy(gameObject);
+            if (dead)
+                return;
+
+            dead = true;
+            StartCoroutine(DeathCoroutine());
         }
         
 
@@ -140,6 +147,41 @@ namespace CarcassEnemy
             }
 
             Debug.Log(hurtDbg);
+
+            //Impl: Crit damage
+            health = Mathf.Max(0f, health-hurtEventData.multiplier);
+
+            if (health <= 0f && !dead)
+            {
+                dead = true;
+                StartCoroutine(DeathCoroutine());
+            }
+
+        }
+
+        private bool dead;
+
+        //Placeholder stuff
+        private IEnumerator DeathCoroutine()
+        {
+            Vector3 scale = transform.localScale;
+
+            float time = 0.75f;
+            float timer = time;
+
+            while (timer > 0f)
+            {
+                yield return new WaitForEndOfFrame();
+                timer -= Time.deltaTime;
+
+                float interval = 1-(timer / time);
+                Vector3 newScale = Vector3.Lerp(scale,Vector3.zero,interval);
+                transform.localScale = newScale;
+            }
+
+            transform.localScale = Vector3.zero;
+            Debug.Log("Carcass died.");
+            GameObject.Destroy(gameObject);
         }
 
 

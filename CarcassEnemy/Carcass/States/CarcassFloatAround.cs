@@ -11,12 +11,14 @@ namespace CarcassEnemy
         private Rigidbody rb;
 
         private float direction;
-        private float lateralGlideSpeed = 4f;
+        private float lateralGlideSpeed = 11f;
         private float verticalSpeed = 10f;
 
-        private float desiredTargetDistance = 13f;
+        private float movementSmoothing = 8f;
+
+        private float desiredTargetDistance = 16f;
         private float maxTargetDistance = 18f;
-        private float desiredHeight = 8f;
+        private float desiredHeight = 5.5f;
 
         private float actionDelay = 3f;
         private float timeUntilNextAction;
@@ -42,12 +44,12 @@ namespace CarcassEnemy
                 carcass.SetState(this);//Restart state bc nothing else exists rn.
         }
 
-        
-
         private float ResolveTargetDistance(Vector3 position, Vector3 targetPosition)
         {
             return Mathf.Sign(desiredTargetDistance - (targetPosition - position).XZ().magnitude);
         }
+
+        private Vector3 velocity;
 
         public override void OnFixedUpdate(Carcass carcass)
         {
@@ -73,7 +75,9 @@ namespace CarcassEnemy
 
             Vector3 moveDelta = travelVector * lateralGlideSpeed;
             moveDelta.y += carcass.CalculateVerticalMoveDirection(carcass.transform.position, desiredHeight) * verticalSpeed;
-            rb.velocity = moveDelta;
+
+            velocity = Vector3.MoveTowards(velocity, moveDelta, Time.deltaTime * movementSmoothing);
+            rb.velocity = velocity;
         }
 
         public override void OnLateUpdate(Carcass carcass) {}
