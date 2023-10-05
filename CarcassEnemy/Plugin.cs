@@ -1,7 +1,6 @@
 ﻿using BepInEx;
 using CarcassEnemy.Patches;
 using HarmonyLib;
-using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace CarcassEnemy

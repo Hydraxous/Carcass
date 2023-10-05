@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
-using UnityEngine.AI;
 
 namespace CarcassEnemy
 {
@@ -10,6 +7,12 @@ namespace CarcassEnemy
     {
         [SerializeField] private Transform rootTransform;
         public Transform RootTransform => rootTransform;
+
+        [SerializeField] private Transform projectileLobPoint;
+        public Transform ProjectileLobPoint => projectileLobPoint;
+
+        [SerializeField] private Transform centerMass;
+        public Transform CenterMass => centerMass;
 
         [SerializeField] private GameObject spinHitbox;
         public GameObject SpinHitbox => spinHitbox;
@@ -20,8 +23,14 @@ namespace CarcassEnemy
         [SerializeField] private Animator animator;
         public Animator Animator => animator;
 
+        [SerializeField] private CarcassAnimation animation;
+        public CarcassAnimation Animation => animation;
+
         [SerializeField] private Machine machine;
         public Machine Machine => machine;
+
+        [SerializeField] private EnemyIdentifier eid;
+        public EnemyIdentifier EnemyIdentifier => eid;
 
         [SerializeField] private GameObject[] hitboxes;
         public GameObject[] Hitboxes

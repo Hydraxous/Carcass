@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CarcassEnemy
+﻿namespace CarcassEnemy
 {
     public static class ConstInfo
     {

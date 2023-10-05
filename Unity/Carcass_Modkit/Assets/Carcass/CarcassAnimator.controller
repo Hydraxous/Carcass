@@ -7,7 +7,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Armature|Spin
+  m_Name: Spin
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -57,7 +57,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Armature|Dash
+  m_Name: Dash
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -87,28 +87,27 @@ BlendTree:
   m_Name: Blend Tree
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: 8355165466811830035, guid: 5f53187c2df4fa24fafdb81ed9fe0e13,
-      type: 3}
+    m_Motion: {fileID: 2404954201879989280}
     m_Threshold: 0
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
     m_CycleOffset: 0
-    m_DirectBlendParameter: Shaking
+    m_DirectBlendParameter: Retreating
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: -7355791770818906339, guid: 5f53187c2df4fa24fafdb81ed9fe0e13,
+    m_Motion: {fileID: -7858328952795598283, guid: 5f53187c2df4fa24fafdb81ed9fe0e13,
       type: 3}
     m_Threshold: 1
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
     m_CycleOffset: 0
-    m_DirectBlendParameter: Shaking
+    m_DirectBlendParameter: Retreating
     m_Mirror: 0
-  m_BlendParameter: Retreating
+  m_BlendParameter: Shaking
   m_BlendParameterY: Blend
   m_MinThreshold: 0
   m_MaxThreshold: 1
-  m_UseAutomaticThresholds: 1
+  m_UseAutomaticThresholds: 0
   m_NormalizedBlendValues: 0
   m_BlendType: 0
 --- !u!1101 &-1323695000209493026
@@ -140,7 +139,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Armature|Shaking
+  m_Name: Shake
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -168,7 +167,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Armature|Stunned
+  m_Name: Stunned
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -199,6 +198,12 @@ AnimatorController:
   serializedVersion: 5
   m_AnimatorParameters:
   - m_Name: Retreating
+    m_Type: 1
+    m_DefaultFloat: 0
+    m_DefaultInt: 0
+    m_DefaultBool: 0
+    m_Controller: {fileID: 0}
+  - m_Name: Shaking
     m_Type: 1
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -265,6 +270,39 @@ AnimatorState:
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
   m_TimeParameter: 
+--- !u!206 &2404954201879989280
+BlendTree:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: BlendTree
+  m_Childs:
+  - serializedVersion: 2
+    m_Motion: {fileID: 8355165466811830035, guid: 5f53187c2df4fa24fafdb81ed9fe0e13,
+      type: 3}
+    m_Threshold: 0
+    m_Position: {x: 0, y: 0}
+    m_TimeScale: 1
+    m_CycleOffset: 0
+    m_DirectBlendParameter: Retreating
+    m_Mirror: 0
+  - serializedVersion: 2
+    m_Motion: {fileID: -7355791770818906339, guid: 5f53187c2df4fa24fafdb81ed9fe0e13,
+      type: 3}
+    m_Threshold: 1
+    m_Position: {x: 0, y: 0}
+    m_TimeScale: 1
+    m_CycleOffset: 0
+    m_DirectBlendParameter: Retreating
+    m_Mirror: 0
+  m_BlendParameter: Retreating
+  m_BlendParameterY: Retreating
+  m_MinThreshold: 0
+  m_MaxThreshold: 1
+  m_UseAutomaticThresholds: 1
+  m_NormalizedBlendValues: 0
+  m_BlendType: 0
 --- !u!1101 &3221164635777611993
 AnimatorStateTransition:
   m_ObjectHideFlags: 1
@@ -294,7 +332,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Armature|Retreat
+  m_Name: Retreat
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -344,7 +382,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Armature|Dodge
+  m_Name: Dodge
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -404,13 +442,13 @@ AnimatorStateMachine:
     m_Position: {x: 670, y: 220, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 4183924838035161079}
-    m_Position: {x: 670, y: 260, z: 0}
+    m_Position: {x: 500, y: 410, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -6800140816235480424}
-    m_Position: {x: 670, y: 340, z: 0}
+    m_Position: {x: 670, y: 300, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -452628258623533950}
-    m_Position: {x: 670, y: 300, z: 0}
+    m_Position: {x: 670, y: 260, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 665038200570462653}
     m_Position: {x: 360, y: 230, z: 0}
@@ -427,3 +465,18 @@ AnimatorStateMachine:
   m_ExitPosition: {x: 830, y: -70, z: 0}
   m_ParentStateMachinePosition: {x: 800, y: 20, z: 0}
   m_DefaultState: {fileID: 665038200570462653}
+--- !u!206 &8130466300231430935
+BlendTree:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: BlendTree
+  m_Childs: []
+  m_BlendParameter: Retreating
+  m_BlendParameterY: Retreating
+  m_MinThreshold: 0
+  m_MaxThreshold: 1
+  m_UseAutomaticThresholds: 1
+  m_NormalizedBlendValues: 0
+  m_BlendType: 0
