@@ -29,6 +29,11 @@
         public int shake_ProjectileCount = 3;
         public int shake_ProjectileGroup = 3;
 
+        //Eye spawning
+        public int eyeSpawnCount = 3;
+        public float eyeSpawnDelay = 0.14f;
+
+        public float stunTime = 2.5f;
 
         public int maxHealth = 65;
 
