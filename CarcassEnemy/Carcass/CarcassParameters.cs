@@ -1,43 +1,53 @@
-﻿namespace CarcassEnemy
+﻿using System;
+
+namespace CarcassEnemy
 {
     public class CarcassParameters
     {
+        //Health
+        public float maxHealth = 65f;
+        public float lowHealthThreshold = 0.4f;
+        public float healCooldown = 9f;
+
+        //Movement
         public float lateralFlySpeed = 30f;
-        public float strafeSpeed = 15f;
         public float verticalFlySpeed = 10f;
-
+        public float fallSpeed = 20f;
+        public float strafeSpeed = 15f;
+        public float desiredFlyHeight = 7f;
         public float movementSmoothing = 8f;
+        public float directionChangeDelay = 2f;
 
+        //Targeting
         public float minTargetDistance = 16f;
         public float maxTargetDistance = 18f;
         
-        public float desiredHeight = 5.5f;
-
+        //General Attack
         public float attackDelay = 3f;
-
         public float speedWhileAttackingMultiplier = 0.25f;
+        public float enragedSpeedMultiplier = 1.5f;
+        public float maxAttackTimeFailsafe = 8f;
 
-        //Timer
-        public float directionChangeDelay = 2f;
+        //Lob projectile attack
+        public float spin_MaxRange = 35f;
 
-        //VerticalLookRange;
-        public float maxVerticalLookRange = 5f;
-
-        //Blue projectile attack params
+        //Blue projectile attack
         public float shake_ProjectileOriginRadius = 4f;
         public float shake_ProjectileBurstLengthInSeconds = 2.2f;
         public int shake_ProjectileCount = 3;
         public int shake_ProjectileGroup = 3;
 
+
         //Eye spawning
-        public int eyeSpawnCount = 3;
-        public float eyeSpawnDelay = 0.14f;
+        public int eye_SpawnCount = 3;
+        public float eye_SpawnDelay = 0.14f;
+        public float eye_HealDelay = 0.3f;
+        public float eye_InitialHealDelay = 0.4f;
+        public float eye_HealPerEye = 6.666f;
+        public float eye_Health = 2f;
+        public float eye_SpawnCooldown = 12f;
 
-        public float stunTime = 2.5f;
-
-        public int maxHealth = 65;
-
-       
-
+        //Stun
+        public float stunTime = 2.5f; //Unused, currently animation length controls stun time.
     }
 }

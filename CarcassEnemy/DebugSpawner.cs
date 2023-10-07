@@ -20,8 +20,14 @@ namespace CarcassEnemy
             if (Input.GetKeyDown(KeyCode.Keypad2))
                 ForEachCarcassDo((c) => c.ShakeAttack());
 
-            if(Input.GetKeyDown(KeyCode.Keypad3))
-                Carcass.DisableAttackTimer = !Carcass.DisableAttackTimer;
+            if (Input.GetKeyDown(KeyCode.Keypad4))
+                ForEachCarcassDo((c) => c.SpawnEyes());
+
+            if (Input.GetKeyDown(KeyCode.Keypad5))
+                ForEachCarcassDo((c) => c.HealAction());
+
+            if (Input.GetKeyDown(KeyCode.Keypad3))
+                Carcass.DisableActionTimer = !Carcass.DisableActionTimer;
         }
 
         private void SpawnCarcass()

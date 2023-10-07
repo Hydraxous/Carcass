@@ -9,5 +9,6 @@ namespace CarcassEnemy
         public float multiplier;
         public float critMultiplier; 
         public GameObject sourceWeapon;
+        public string hitter;
     }
 }

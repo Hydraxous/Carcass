@@ -15,6 +15,7 @@ namespace CarcassEnemy.Patches
         {
             machineRelays.Clear();
             links.Clear();
+            eidLinks.Clear();
         }
 
         //We check if our interface is on the same object as Machine component.
@@ -30,6 +31,8 @@ namespace CarcassEnemy.Patches
             {
                 machineRelays.Add(__instance);
                 links.Add(__instance, enemy);
+                if(__instance.TryGetComponent<EnemyIdentifier>(out EnemyIdentifier eid))
+                    eidLinks.Add(__instance, eid);
                 //__instance.enabled = false; Dunno what effect this will cause, it works fine without doing this so...
                 return false;
             }
@@ -54,11 +57,17 @@ namespace CarcassEnemy.Patches
             return !IsCustom(__instance);
         }
 
+        private static Dictionary<Machine, EnemyIdentifier> eidLinks = new Dictionary<Machine, EnemyIdentifier>();
+
         [HarmonyPatch(nameof(Machine.GetHurt)), HarmonyPrefix]
         private static bool GetHurt(Machine __instance, GameObject target, Vector3 force, float multiplier, float critMultiplier, GameObject sourceWeapon = null)
         {
             if (!IsCustom(__instance))
                 return true;
+
+            string hitter = "";
+            if (eidLinks.ContainsKey(__instance))
+                hitter = eidLinks[__instance].hitter;
 
             //Pass logic to linked ICustomEnemy, and up the parameters
             links[__instance]?.GetHurt(new HurtEventData()
@@ -67,7 +76,8 @@ namespace CarcassEnemy.Patches
                 force = force,
                 multiplier = multiplier,
                 critMultiplier = critMultiplier,
-                sourceWeapon = sourceWeapon
+                sourceWeapon = sourceWeapon,
+                hitter = hitter
             });
 
             return false;

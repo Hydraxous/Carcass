@@ -24,7 +24,17 @@ ModelImporter:
   - first:
       74: -7646926558962178391
     second: Armature|Stunned
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Carcass Head
+    second: {fileID: 2100000, guid: 76f97087eabc1864386c96ca92f4b033, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Carcass body
+    second: {fileID: 2100000, guid: 9cd8d91a46385264abc78a4496130547, type: 2}
   materials:
     materialImportMode: 1
     materialName: 0
