@@ -13,7 +13,15 @@ namespace CarcassEnemy
     {
         //References
         [SerializeField] private CarcassComponents components;
-        public CarcassComponents Components => components;
+        public CarcassComponents Components
+        {
+            get
+            {
+                if(components == null)
+                    components = GetComponent<CarcassComponents>();
+                return components;
+            }
+        }
 
         [SerializeField] private Transform target;
         public Transform Target => target;
@@ -48,9 +56,11 @@ namespace CarcassEnemy
         private bool dead;
         private bool isStunned;
         private bool isHealing;
+        private bool isDodging;
         private float randomStrafeDirection;
         private float timeUntilDirectionChange = 2f;
         private float actionTimer = 3f;
+        private float dodgeCooldown;
         private float healCooldownTimer;
         private bool isActioning;
         public Vector3 ExternalForce { get; private set; }
@@ -58,6 +68,8 @@ namespace CarcassEnemy
         private Delegate lastAttack;
 
         private List<Drone> spawnedEyes = new List<Drone>();
+
+        private GameObject summonCircle;
 
         //debug
         public static bool DisableActionTimer;
@@ -76,6 +88,7 @@ namespace CarcassEnemy
                     rb.isKinematic = true;
                     rb.useGravity = false;
                 }
+                components.ProjectileDetector.OnProjectileDetected += OnProjectileDetected;
             }
         }
 
@@ -99,7 +112,7 @@ namespace CarcassEnemy
 
         private void LateUpdate()
         {
-            if (target == null)
+            if (target == null || isDodging || dead)
                 return;
 
             TurnTowards(target.position, 20000f);
@@ -116,7 +129,7 @@ namespace CarcassEnemy
                 timeUntilDirectionChange = Parameters.directionChangeDelay;
             }
 
-            if (!isActioning && !DisableActionTimer)
+            if (!DisableActionTimer)
                 actionTimer -= Time.deltaTime;
 
             if (actionTimer <= 0f && !isStunned)
@@ -125,6 +138,7 @@ namespace CarcassEnemy
                 actionTimer = Parameters.attackDelay;
             }
 
+            dodgeCooldown -= Time.deltaTime;
             eyeRespawnTimer -= Time.deltaTime;
         }
         private Vector3 GetRingSpawnPosition()
@@ -179,6 +193,9 @@ namespace CarcassEnemy
         {
             Vector3 velocity = GetVelocity();
 
+            if (isDodging)
+                return;
+            
             if (isStunned || dead || isHealing)
                 velocity = ApplyBrake(velocity);
             else
@@ -234,6 +251,16 @@ namespace CarcassEnemy
             return velocity;
         }
 
+        private Ray lastProjectileDetected;
+
+        private Vector3 ApplyDodgeMovement(Vector3 velocity)
+        {
+            Vector3 moveDirection = Vector3.Cross(lastProjectileDetected.direction, Vector3.up);
+            moveDirection = moveDirection.normalized * Parameters.dodgeMoveSpeed * Time.deltaTime;
+            velocity += moveDirection;
+            return velocity;
+        }
+
         private Vector3 ApplyBrake(Vector3 velocity)
         {
             return Vector3.MoveTowards(velocity, Vector3.zero, Time.deltaTime * Parameters.movementSmoothing);
@@ -266,7 +293,6 @@ namespace CarcassEnemy
                 return;
             }
 
-
             //Peform damage attack
             Vector3 position = transform.position;
             Vector3 targetPos = target.position;
@@ -280,21 +306,30 @@ namespace CarcassEnemy
 
             if (healCooldownTimer <= 0f)
                 if (spawnedEyes.Count > 0)
-                    if (health < Parameters.lowHealthThreshold)
+                    if (health < Parameters.lowHealthThreshold*Parameters.maxHealth)
                         attackPool.Add(HealAction);
 
             //In range and higher up than the player
             if (lateralDistance < Parameters.spin_MaxRange && verticalDistance < 0)
                 attackPool.Add(SpinAttack);
 
+            if(verticalDistance < 0f && summonCircle == null)
+                attackPool.Add(SummonSigil);
+
             attackPool.Add(ShakeAttack);
 
             if (lastAttack != null)
                 attackPool.Remove(lastAttack);
-
-            lastAttack = attackPool[UnityEngine.Random.Range(0, attackPool.Count)];
-            lastAttack.DynamicInvoke();
-        
+            try
+            {
+                lastAttack = attackPool[UnityEngine.Random.Range(0, attackPool.Count)];
+                lastAttack.DynamicInvoke();
+            }
+            catch (Exception e) 
+            {
+                Debug.LogWarning("Ayup");
+                Debug.LogException(e);
+            }
         }
 
         public void SpinAttack()
@@ -320,6 +355,42 @@ namespace CarcassEnemy
             isStunned = false;
         }
 
+        public void OnProjectileDetected(Ray ray)
+        {
+            //Dodge directionally.
+            Dodge();
+        }
+
+        public void Dodge()
+        {
+            if (isActioning || dodgeCooldown > 0f)
+                return;
+
+            dodgeCooldown = Parameters.dodgeCooldownTime;
+            lastActionName = "Dodge";
+            isActioning = true;
+            isDodging = true;
+            Components.Animation.Dodge();
+            StartCoroutine(InvokeAfterAnimation(() =>
+            {
+                AttackDone();
+                isDodging = false;
+            }));
+            StartCoroutine(DodgeMovment());
+        }
+
+        private IEnumerator DodgeMovment()
+        {
+            Vector3 dodgeDirection = transform.right;
+            Vector3 dodgeVelo = dodgeDirection * Parameters.dodgeMoveSpeed;
+            while (isDodging)
+            {
+                yield return new WaitForFixedUpdate();
+                Vector3 velocity = GetVelocity();
+                Components.Rigidbody.velocity = Vector3.MoveTowards(velocity, dodgeVelo, Parameters.movementSmoothing*Time.fixedTime);
+            }
+        }
+
         public void ShakeAttack()
         {
             lastActionName = "BlueAttack";
@@ -328,12 +399,28 @@ namespace CarcassEnemy
             StartCoroutine(ShakeAttackCoroutine());
         }
 
+        public void SummonSigil()
+        {
+            lastActionName = "SummonSigil";
+            isActioning = true;
+            Components.Animation.Summon();
+            StartCoroutine(InvokeAfterAnimation(AttackDone));
+        }
+
+        public void SpawnSigil()
+        {
+            GameObject newSigil = GameObject.Instantiate(Components.SummonCirclePrefab);
+            SummonCircle summonCircle = newSigil.GetComponent<SummonCircle>();
+            summonCircle.SetTarget(target);
+            this.summonCircle = newSigil;
+        }
+
         public void SpawnEyes()
         {
             lastActionName = "SpawnEyes";
             eyeRespawnTimer = Parameters.eye_SpawnCooldown;
             isActioning = true;
-            Components.Animation.Shake();
+            Components.Animation.Writhe();
 
             int eyesToSpawn = Parameters.eye_SpawnCount - spawnedEyes.Count;
 
@@ -446,7 +533,7 @@ namespace CarcassEnemy
             isActioning = true;
             isHealing = true;
             healCooldownTimer = Parameters.healCooldown;
-            Components.Animation.Shake();
+            Components.Animation.KillEyes();
             InvokeAfterTime(() =>
             {
                 for (int i = 0; i < spawnedEyes.Count; i++)

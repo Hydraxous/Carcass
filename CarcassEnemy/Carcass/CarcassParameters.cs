@@ -17,6 +17,7 @@ namespace CarcassEnemy
         public float desiredFlyHeight = 7f;
         public float movementSmoothing = 8f;
         public float directionChangeDelay = 2f;
+        public float dodgeMoveSpeed = 10f;
 
         //Targeting
         public float minTargetDistance = 16f;
@@ -49,5 +50,7 @@ namespace CarcassEnemy
 
         //Stun
         public float stunTime = 2.5f; //Unused, currently animation length controls stun time.
+
+        public float dodgeCooldownTime = 6f;
     }
 }

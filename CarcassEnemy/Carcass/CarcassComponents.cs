@@ -43,5 +43,11 @@ namespace CarcassEnemy
                 return hitboxes;
             }
         }
+
+        [SerializeField] private GameObject summonCirclePrefab;
+        public GameObject SummonCirclePrefab => summonCirclePrefab;
+
+        [SerializeField] private ProjectileDetector projectileDetector;
+        public ProjectileDetector ProjectileDetector => projectileDetector;
     }
 }
