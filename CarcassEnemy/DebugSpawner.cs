@@ -29,6 +29,9 @@ namespace CarcassEnemy
             if (Input.GetKeyDown(KeyCode.Keypad6))
                 ForEachCarcassDo((c) => c.SummonSigil());
 
+            if (Input.GetKeyDown(KeyCode.Keypad7))
+                ForEachCarcassDo((c) => c.Enrage());
+
             if (Input.GetKeyDown(KeyCode.Keypad3))
                 Carcass.DisableActionTimer = !Carcass.DisableActionTimer;
         }

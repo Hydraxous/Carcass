@@ -14,8 +14,8 @@ namespace CarcassEnemy
         [SerializeField] private Transform centerMass;
         public Transform CenterMass => centerMass;
 
-        [SerializeField] private GameObject spinHitbox;
-        public GameObject SpinHitbox => spinHitbox;
+        [SerializeField] private HashedTrigger spinHitbox;
+        public HashedTrigger SpinHitbox => spinHitbox;
 
         [SerializeField] private Rigidbody rb;
         public Rigidbody Rigidbody => rb;

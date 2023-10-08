@@ -8,13 +8,18 @@ namespace CarcassEnemy
 {
     public class ProjectileDetector : MonoBehaviour
     {
-        public event Action<Ray> OnProjectileDetected;
-
+        public event Action<Collider> OnProjectileDetected;
+        private HashSet<Collider> detected = new HashSet<Collider>();
+        
         private void OnTriggerEnter(Collider other)
         {
             if (other.gameObject.layer != 14)
                 return;
 
+            if (detected.Contains(other))
+                return;
+
+            detected.Add(other);
             ProcessCollider(other);
         }
 
@@ -22,12 +27,12 @@ namespace CarcassEnemy
         {
             if(other.TryGetComponent<Grenade>(out Grenade grenade))
             {
-                OnProjectileDetected?.Invoke(new Ray(grenade.transform.position, grenade.transform.forward));
+                OnProjectileDetected?.Invoke(other);
             }
 
             if (other.TryGetComponent<Cannonball>(out Cannonball cannonBall))
             {
-                OnProjectileDetected?.Invoke(new Ray(cannonBall.transform.position, cannonBall.transform.forward));
+                OnProjectileDetected?.Invoke(other);
             }
         }
     }

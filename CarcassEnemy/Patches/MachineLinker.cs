@@ -69,7 +69,7 @@ namespace CarcassEnemy.Patches
             if (eidLinks.ContainsKey(__instance))
                 hitter = eidLinks[__instance].hitter;
 
-            //Pass logic to linked ICustomEnemy, and up the parameters
+            //Pass logic to linked ICustomEnemy, and clean up the parameters
             links[__instance]?.GetHurt(new HurtEventData()
             {
                 target = target,
@@ -84,7 +84,7 @@ namespace CarcassEnemy.Patches
         }
 
         [HarmonyPatch(nameof(Machine.GoLimp)), HarmonyPrefix]
-        private static bool GetLimp(Machine __instance)
+        private static bool GoLimp(Machine __instance)
         {
             if (!IsCustom(__instance))
                 return true;

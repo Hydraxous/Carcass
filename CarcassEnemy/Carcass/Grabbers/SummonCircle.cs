@@ -51,7 +51,7 @@ namespace CarcassEnemy
 
         private void LateUpdate()
         {
-            if (target == null || dying || activated)
+            if (target == null || dying)
                 return;
 
             Vector3 targetPosition = target.position;
@@ -93,12 +93,39 @@ namespace CarcassEnemy
             yield return Shrink();
         }
 
+        private bool isAlive;
+
+        private IEnumerator PerformAttackAlt()
+        {
+            while (isAlive)
+            {
+                yield return new WaitForSeconds(armSpawnDelay);
+
+                if (targetInRange)
+                    SpawnArm();
+            }
+        }
+
         private void SpawnArm()
         {
-            Vector2 disc = Random.insideUnitCircle;
-            Quaternion rot = transform.rotation;
-            Vector3 spawnPosition = rot * (new Vector3(disc.x, 0f, disc.y)*radius);
-            spawnPosition += transform.position;
+
+            Vector3 targetPosition = target.position;
+            Vector3 pos = transform.position;
+
+            Vector3 spawnPosition = transform.position;
+
+            //Player is standing within circle radius.
+            if(Vector3.Magnitude(targetPosition.XZ()-pos.XZ()) < radius)
+            {
+                spawnPosition = new Vector3(targetPosition.x, pos.y, targetPosition.z);
+            }
+            else
+            {
+                Vector2 disc = Random.insideUnitCircle;
+                Quaternion rot = transform.rotation;
+                spawnPosition += rot * (new Vector3(disc.x, 0f, disc.y) * radius);
+            }
+
             float randomAngle = UnityEngine.Random.value * 360f;
             Quaternion spawnRotation = Quaternion.Euler(0, randomAngle, 0);
             GameObject newArm = GameObject.Instantiate(grabbyHandPrefab, spawnPosition, spawnRotation);
@@ -122,12 +149,24 @@ namespace CarcassEnemy
             Destroy(gameObject);
         }
 
+
         private void OnTriggerEnter(Collider col)
         {
             if (!col.CompareTag("Player"))
                 return;
 
+            targetInRange = true;
             activated = true;
         }
+
+        private void OnTriggerExit(Collider col)
+        {
+            if (!col.CompareTag("Player"))
+                return;
+
+            targetInRange = false;
+        }
+
+        private bool targetInRange;
     }
 }
