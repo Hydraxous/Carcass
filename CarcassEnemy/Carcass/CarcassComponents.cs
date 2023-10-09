@@ -49,5 +49,11 @@ namespace CarcassEnemy
 
         [SerializeField] private ProjectileDetector projectileDetector;
         public ProjectileDetector ProjectileDetector => projectileDetector;
+
+        [SerializeField] private HookDetector hookDetector;
+        public HookDetector HookDetector => hookDetector;
+
+        [SerializeField] private GameObject healOrbPrefab;
+        public GameObject HealOrbPrefab => healOrbPrefab;
     }
 }

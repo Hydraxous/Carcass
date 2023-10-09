@@ -43,11 +43,6 @@ namespace CarcassEnemy
             Carcass.FireExplosiveProjectile();
         }
 
-        public void FireTrackingProjectile()
-        {
-            Carcass.FireTrackingProjectile();
-        }
-
         public void SpawnSigil()
         {
             Carcass.SpawnSigil();

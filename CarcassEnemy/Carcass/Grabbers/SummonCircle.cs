@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using ULTRAKILL.Cheats;
 using UnityEngine;
 
 namespace CarcassEnemy
@@ -7,12 +8,15 @@ namespace CarcassEnemy
     {
         [SerializeField] private GameObject grabbyHandPrefab;
 
+        [SerializeField] private SpriteRenderer nonActiveSprite;
+        [SerializeField] private SpriteRenderer activeSprite;
+
         private float armSpawnDelay = 0.12f;
         private static float groundOffset = 0.15f;
         private int grabbyCount = 6;
         private float radius = 3f;
 
-        private float lifeTime = 6f;
+        private float lifeTime = 18f;
         private float timeUntilAttack = 0.75f;
 
         private bool dying;
@@ -20,6 +24,8 @@ namespace CarcassEnemy
         private bool activated;
 
         private Transform target;
+
+       
 
         public void SetTarget(Transform target)
         {
@@ -38,6 +44,12 @@ namespace CarcassEnemy
             {
                 Die();
             }
+
+            if (activated)
+            {
+                nonActiveSprite.color = Color.Lerp(Color.white, Color.clear, Time.deltaTime * armSpawnDelay);
+            }
+
 
             if(activated)
             {
@@ -81,12 +93,31 @@ namespace CarcassEnemy
             StartCoroutine(PerformAttack());
         }
 
+        private IEnumerator AttackDelay()
+        {
+            float time = armSpawnDelay;
+            float timer = time;
+            while (timer > 0f)
+            {
+                float i = 1 - (timer / time);
+
+                nonActiveSprite.color = Color.Lerp(Color.white, Color.clear, i);
+                activeSprite.color = Color.Lerp(Color.clear, Color.white, i);
+
+                yield return new WaitForEndOfFrame();
+                timer -= Time.deltaTime;
+            }
+
+            nonActiveSprite.color = Color.Lerp(Color.white, Color.clear, 1);
+            activeSprite.color = Color.Lerp(Color.clear, Color.white, 1);
+        }
+
         private IEnumerator PerformAttack()
         {
             for (int i = 0; i < grabbyCount; i++)
             {
                 SpawnArm();
-                yield return new WaitForSeconds(armSpawnDelay);
+                yield return AttackDelay();
             }
 
             yield return new WaitForSeconds(0.25f);
@@ -129,6 +160,8 @@ namespace CarcassEnemy
             float randomAngle = UnityEngine.Random.value * 360f;
             Quaternion spawnRotation = Quaternion.Euler(0, randomAngle, 0);
             GameObject newArm = GameObject.Instantiate(grabbyHandPrefab, spawnPosition, spawnRotation);
+            GrabbyArm arm = newArm.GetComponent<GrabbyArm>();
+            arm.SetOwner(owner);
         }
 
         private IEnumerator Shrink()
@@ -149,7 +182,12 @@ namespace CarcassEnemy
             Destroy(gameObject);
         }
 
-
+        private Carcass owner;
+        public Carcass Owner => owner;
+        public void SetOwner(Carcass owner)
+        {
+            this.owner = owner;
+        }
         private void OnTriggerEnter(Collider col)
         {
             if (!col.CompareTag("Player"))
