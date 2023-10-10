@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -109,6 +110,8 @@ namespace CarcassEnemy
                 components.SpinHitbox.OnTriggerEntered += OnHurtboxEnter;
                 components.HookDetector.OnHookstateChanged += OnHookStateChanged;
                 SetHitboxVisibility(CarcassCFG.HitboxesVisible);
+
+                components.EnemyIdentifier.spawnEffect = UKPrefabs.SpawnEffect.Asset;
             }
         }
 
@@ -597,6 +600,18 @@ namespace CarcassEnemy
                 return;
 
             health = Mathf.Clamp(health + amount, 0f, Parameters.maxHealth);
+
+            if (health <= 0f)
+            {
+                Die();
+                return;
+            }
+
+            if (amount > 0)
+            {
+                //Healing VFX
+                GameObject.Instantiate(CarcassAssets.HealFX, Components.CenterMass);
+            }
         }
 
         public void SpawnSigil()
@@ -711,6 +726,11 @@ namespace CarcassEnemy
                 if (drone != null)
                     enemyIdentifier.onDeath.AddListener(() => { OnEyeDeath(drone); });
             }
+
+            MeshRenderer renderer = eyeObject.GetComponentsInChildren<MeshRenderer>().Where(x => x.name == "Gib_Eyeball").FirstOrDefault();
+            renderer.material = CarcassAssets.CarcassEyeMaterial;
+
+            GameObject.Instantiate(CarcassAssets.GenericSpawnFX, Components.CenterMass);
         }
 
         public void HealAction()
@@ -835,8 +855,12 @@ namespace CarcassEnemy
 
             float lastHealth = health;
 
+            if (isStunned)
+                damage *= Parameters.stunDamageMultiplier;
+
             health = Mathf.Max(0f, health - damage);
 
+            //Enrage at "low health"
             float lowHealth = Parameters.maxHealth * Parameters.lowHealthThreshold;
             if (health < lowHealth && lastHealth >= lowHealth)
             {
@@ -1010,7 +1034,7 @@ namespace CarcassEnemy
             Vector3 pos = transform.position;
             Vector3 scale = transform.localScale;
 
-            float time = 2f;
+            float time = 3f;
             float timer = time;
 
             Vector3 offset = Vector3.zero;
@@ -1018,6 +1042,7 @@ namespace CarcassEnemy
             while (timer > 0f)
             {
                 yield return new WaitForEndOfFrame();
+                SpawnLightShaft(); //LOL
                 timer -= Time.deltaTime;
                 transform.position = offset + pos + UnityEngine.Random.onUnitSphere*0.15f;
                 offset += Vector3.up * Time.deltaTime;
@@ -1037,7 +1062,7 @@ namespace CarcassEnemy
             dead = true;
             Components.EnemyIdentifier.dead = true;
 
-            Components.Animation.Writhe();
+            Components.Animation.Death();
             for (int i = 0; i < spawnedEyes.Count; i++)
             {
                 if (spawnedEyes[i] == null)
@@ -1050,7 +1075,11 @@ namespace CarcassEnemy
 
             StartCoroutine(DeathCoroutine());
         }
-
+        
+        private void SpawnLightShaft()
+        {
+            GameObject.Instantiate(UKPrefabs.LightShaft.Asset, Components.CenterMass.position, UnityEngine.Random.rotation).transform.SetParent(base.transform, true);
+        }
 
         #endregion
 

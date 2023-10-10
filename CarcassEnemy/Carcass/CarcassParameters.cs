@@ -52,7 +52,8 @@ namespace CarcassEnemy
 
         //Stun
         public float stunTime = 2.5f; //Unused, currently animation length controls stun time.
-        public float enrageAddEnrageTimeOnStun = 8.5f; //Unused, currently animation length controls stun time.
+        public float enrageAddEnrageTimeOnStun = 8.5f;
+        public float stunDamageMultiplier = 1.2f;
 
         public float dodgeCooldownTime = 2f;
         public float dodgeLength = 0.65f;

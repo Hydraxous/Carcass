@@ -62,6 +62,8 @@ namespace CarcassEnemy
 
         //Stun
         [Configgy.Configgable("Carcass/Parameters")]  private static float stunTime = 2.5f; //Unused, currently animation length controls stun time.
+        [Configgy.Configgable("Carcass/Parameters")] private static float enrageAddEnrageTimeOnStun = 8.5f;
+        [Configgy.Configgable("Carcass/Parameters")] private static float stunDamageMultiplier = 1.2f;
 
         [Configgy.Configgable("Carcass/Parameters")] private static float dodgeForce = 65f;
         [Configgy.Configgable("Carcass/Parameters")]  private static float dodgeCooldownTime = 2f;
@@ -211,7 +213,7 @@ namespace CarcassEnemy
                 //Lob projectile attack
                 spinMaxRange = spinMaxRange,
                 spinMeleeDamage = spinMeleeDamage,
-                spinMeleeKnockback= spinMeleeKnockback,
+                spinMeleeKnockback = spinMeleeKnockback,
 
                 //Blue projectile attack
                 shakeProjectileOriginRadius = shakeProjectileOriginRadius,
@@ -231,6 +233,8 @@ namespace CarcassEnemy
                 eyeSpawnCooldown = eyeSpawnCooldown,
                 //Stun
                 stunTime = stunTime, //Unused, currently animation length controls stun time.
+                stunDamageMultiplier = stunDamageMultiplier,
+                enrageAddEnrageTimeOnStun = enrageAddEnrageTimeOnStun,
 
                 dodgeCooldownTime = dodgeCooldownTime,
                 dodgeLength = dodgeLength,

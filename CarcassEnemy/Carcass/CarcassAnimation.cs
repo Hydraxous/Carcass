@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace CarcassEnemy
 {
@@ -38,6 +39,7 @@ namespace CarcassEnemy
         private static readonly int writhe = Animator.StringToHash("Writhe");
         private static readonly int summon = Animator.StringToHash("Summon");
         private static readonly int killEyes = Animator.StringToHash("KillEyes");
+        private static readonly int death = Animator.StringToHash("Death");
 
         public void FireExplosiveProjectile()
         {
@@ -92,6 +94,11 @@ namespace CarcassEnemy
         public void KillEyes()
         {
             Animator.Play(killEyes, 0, 0);
+        }
+
+        public void Death()
+        {
+            Animator.Play(death, 0, 0);
         }
 
     }

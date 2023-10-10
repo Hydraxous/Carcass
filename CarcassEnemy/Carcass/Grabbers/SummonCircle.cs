@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using CarcassEnemy.Assets;
+using System.Collections;
 using ULTRAKILL.Cheats;
 using UnityEngine;
 
@@ -7,6 +8,7 @@ namespace CarcassEnemy
     public class SummonCircle : MonoBehaviour
     {
         [SerializeField] private GameObject grabbyHandPrefab;
+        [SerializeField] private GameObject activateFX;
         [SerializeField] private Animator animator;
 
         private static string animatorActivatedName = "Activated";
@@ -76,6 +78,10 @@ namespace CarcassEnemy
                 return;
 
             isAttacking = true;
+            
+            if(activateFX != null)
+                GameObject.Instantiate(activateFX, transform);
+            
             StartCoroutine(PerformAttack());
         }
 
