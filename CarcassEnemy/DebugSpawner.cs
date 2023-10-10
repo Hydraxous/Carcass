@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CarcassEnemy.Assets;
+using System;
 using UnityEngine;
 
 namespace CarcassEnemy
@@ -44,7 +45,7 @@ namespace CarcassEnemy
             if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMaskDefaults.Get(LMD.Environment), QueryTriggerInteraction.Ignore))
                 return;
 
-            GameObject.Instantiate(GetPrefab(), hit.point + (hit.normal * 0.1f), Quaternion.identity);
+            GameObject.Instantiate(CarcassAssets.Carcass, hit.point + (hit.normal * 0.1f), Quaternion.identity);
         }
 
         private void ForEachCarcassDo(Action<Carcass> onInvoke)
@@ -53,16 +54,6 @@ namespace CarcassEnemy
             {
                 onInvoke?.Invoke(c);
             }
-        }
-
-        private GameObject GetPrefab()
-        {
-            if(carcassPrefab == null)
-            {
-                carcassPrefab = Plugin.AssetLoader.LoadAsset<GameObject>("Carcass");
-            }
-
-            return carcassPrefab;
         }
     }
 }

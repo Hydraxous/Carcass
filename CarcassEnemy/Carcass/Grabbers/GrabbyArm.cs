@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CarcassEnemy.Assets;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -13,17 +14,19 @@ namespace CarcassEnemy
         [SerializeField] private HashedTrigger hurtBox;
 
         private const string animationIndexName = "AttackIndex";
+        private static int attack_Animation = Animator.StringToHash("Attack");
+        private static float smoothRotSpeed = 14f;
 
         private Transform target;
-
-        
-        private static float smoothRotSpeed = 14f;
 
         private void Start()
         {
             hurtBox.OnTriggerEntered += HurtBox_OnTriggerEntered;
             target = PlayerTracker.Instance.GetTarget();
             animator.SetInteger(animationIndexName, UnityEngine.Random.Range(0,4));
+            animator.Play(attack_Animation, 0, 0f);
+            GameObject breakFX = GameObject.Instantiate(UKPrefabs.BreakParticle.Asset, transform.position, Quaternion.identity);
+            breakFX.transform.localScale *= 0.6f;
         }
 
         private bool collected;
@@ -34,9 +37,6 @@ namespace CarcassEnemy
                 return;
 
             if (collected)
-                return;
-
-            if (!CarcassHealOrb.EnableOrbs)
                 return;
 
             collected = true;

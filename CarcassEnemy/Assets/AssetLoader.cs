@@ -23,7 +23,6 @@ namespace CarcassEnemy
             this.Bundle = AssetBundle.LoadFromFile(filePath);
         }
 
-
         public T LoadAsset<T>(string assetName) where T : UnityEngine.Object
         {
             if(loadedAssets.ContainsKey(assetName))
@@ -32,7 +31,10 @@ namespace CarcassEnemy
             T asset = Bundle.LoadAsset<T>(assetName);
 
             if (asset == null)
+            {
+                Debug.LogError($"{assetName} of type {typeof(T)} not found in Assetbundle.");
                 return null;
+            }
 
             loadedAssets.Add(assetName, asset);
             return asset;

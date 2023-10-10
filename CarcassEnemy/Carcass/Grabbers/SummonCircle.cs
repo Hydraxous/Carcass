@@ -7,9 +7,9 @@ namespace CarcassEnemy
     public class SummonCircle : MonoBehaviour
     {
         [SerializeField] private GameObject grabbyHandPrefab;
+        [SerializeField] private Animator animator;
 
-        [SerializeField] private SpriteRenderer nonActiveSprite;
-        [SerializeField] private SpriteRenderer activeSprite;
+        private static string animatorActivatedName = "Activated";
 
         private float armSpawnDelay = 0.12f;
         private static float groundOffset = 0.15f;
@@ -37,27 +37,13 @@ namespace CarcassEnemy
             this.lifeTime = seconds;
         }
 
+
         private void Update()
         {
             lifeTime -= Time.deltaTime;
             if (lifeTime <= 0f)
             {
                 Die();
-            }
-
-            if (activated)
-            {
-                nonActiveSprite.color = Color.Lerp(Color.white, Color.clear, Time.deltaTime * armSpawnDelay);
-            }
-
-
-            if(activated)
-            {
-                timeUntilAttack -= Time.deltaTime;
-                if(timeUntilAttack <= 0f && !isAttacking)
-                {
-                    Attack();
-                }
             }
         }
 
@@ -93,48 +79,34 @@ namespace CarcassEnemy
             StartCoroutine(PerformAttack());
         }
 
-        private IEnumerator AttackDelay()
+        private IEnumerator PreAttackDelay()
         {
-            float time = armSpawnDelay;
+            float time = timeUntilAttack;
             float timer = time;
             while (timer > 0f)
             {
                 float i = 1 - (timer / time);
 
-                nonActiveSprite.color = Color.Lerp(Color.white, Color.clear, i);
-                activeSprite.color = Color.Lerp(Color.clear, Color.white, i);
-
+                animator.SetFloat(animatorActivatedName, i);
                 yield return new WaitForEndOfFrame();
                 timer -= Time.deltaTime;
             }
 
-            nonActiveSprite.color = Color.Lerp(Color.white, Color.clear, 1);
-            activeSprite.color = Color.Lerp(Color.clear, Color.white, 1);
+            animator.SetFloat(animatorActivatedName, 1f);
         }
 
         private IEnumerator PerformAttack()
         {
+            yield return PreAttackDelay();
+
             for (int i = 0; i < grabbyCount; i++)
             {
                 SpawnArm();
-                yield return AttackDelay();
+                yield return new WaitForSeconds(armSpawnDelay);
             }
 
             yield return new WaitForSeconds(0.25f);
             yield return Shrink();
-        }
-
-        private bool isAlive;
-
-        private IEnumerator PerformAttackAlt()
-        {
-            while (isAlive)
-            {
-                yield return new WaitForSeconds(armSpawnDelay);
-
-                if (targetInRange)
-                    SpawnArm();
-            }
         }
 
         private void SpawnArm()
@@ -195,6 +167,7 @@ namespace CarcassEnemy
 
             targetInRange = true;
             activated = true;
+            Attack();
         }
 
         private void OnTriggerExit(Collider col)

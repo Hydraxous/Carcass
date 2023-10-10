@@ -1971,7 +1971,7 @@ MonoBehaviour:
   damageBuff: 0
   damageBuffModifier: 1.5
   buffUnaffectedRenderers: []
-  overrideFullName: 
+  overrideFullName: Carcass
 --- !u!54 &1048774229194844934
 Rigidbody:
   m_ObjectHideFlags: 0

@@ -17,19 +17,27 @@ namespace CarcassEnemy
         [Configgy.Configgable("Carcass/HealOrb")] private static float flySpeed = 30f;
         [Configgy.Configgable("Carcass/HealOrb")] private static float randomSpawnForce = 15f;
 
-        [Configgy.Configgable("Carcass/HealOrb")] private static bool enableOrbs = true;
-
-        public static bool EnableOrbs => enableOrbs;
-
         Vector3 velocity;
         private float lifeTime = 15f;
 
         public void SetOwner(Carcass owner)
         {
+            if (this.owner != null)
+                owner.OnDeath -= Owner_OnDeath;
+
             this.owner = owner;
+
+            if (owner != null)
+                owner.OnDeath += Owner_OnDeath;
+
             Vector3 direction = UnityEngine.Random.onUnitSphere * randomSpawnForce;
             direction.y = Mathf.Abs(direction.y);
             velocity = direction;
+        }
+
+        private void Owner_OnDeath(Carcass obj)
+        {
+            Die();
         }
 
         private void Update()
@@ -63,12 +71,24 @@ namespace CarcassEnemy
             transform.position = pos + (velocity * Time.deltaTime);
         }
 
-        private void Collected()
+        private void Die()
         {
-            owner.Heal(healAmount);
             Destroy(gameObject);
         }
 
+        private void Collected()
+        {
+            owner.Heal(healAmount);
+            Die();
+        }
+
+        private void OnDestroy()
+        {
+            if(owner != null)
+            {
+                owner.OnDeath -= Owner_OnDeath;
+            }
+        }
 
     }
 }

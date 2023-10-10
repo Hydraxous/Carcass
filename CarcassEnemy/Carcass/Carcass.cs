@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 
 namespace CarcassEnemy
 {
-    public class Carcass : MonoBehaviour, ICustomEnemy
+    public class Carcass : MonoBehaviour, IEnemy
     {
         //References
         [SerializeField] private CarcassComponents components;
@@ -43,6 +43,8 @@ namespace CarcassEnemy
             }
         }
 
+        public event Action<Carcass> OnDeath;
+
         public void SetParams(CarcassParameters parameters)
         {
             this.parameters = parameters;
@@ -75,8 +77,6 @@ namespace CarcassEnemy
         private float healCooldownTimer;
         private bool isActioning;
         private bool inModalAction;
-
-
 
         public Vector3 ExternalForce { get; private set; }
         private Vector3 dashDirection;
@@ -391,11 +391,12 @@ namespace CarcassEnemy
                         attackPool.Add(HealAction);
 
             //In range and higher up than the player
-            if (lateralDistance < Parameters.spinMaxRange && verticalDistance < 0 && hasLineOfSight)
-                if(IsEnraged && Parameters.enableEnrageWildAttacks)
-                    attackPool.Add(CarpetBomb);
-                else
-                    attackPool.Add(SpinAttack);
+            //if (lateralDistance < Parameters.spinMaxRange && verticalDistance < 0 && hasLineOfSight)
+
+            if (IsEnraged && Parameters.enableEnrageWildAttacks)
+                attackPool.Add(CarpetBomb);
+            else if(hasLineOfSight)
+                attackPool.Add(SpinAttack);
 
 
             if((verticalDistance < 0f || !hasLineOfSight || IsEnraged) && summonCircle == null || IsEnraged)
@@ -403,14 +404,17 @@ namespace CarcassEnemy
 
             if (IsEnraged && Parameters.enableEnrageWildAttacks)
                 attackPool.Add(BarrageAttack);
-            else
+            else if(hasLineOfSight)
                 attackPool.Add(ShakeAttack);
 
             if (lastAttack != null)
                 attackPool.Remove(lastAttack);
 
-            if(attackPool.Count == 0)//do nothing
+            if (attackPool.Count == 0)//do nothing
+            {
+                lastAttack = null;
                 return;
+            }
 
             try
             {
@@ -858,15 +862,11 @@ namespace CarcassEnemy
 
             spawnedEyes.Remove(eye);
 
-            if(CarcassHealOrb.EnableOrbs)
-            {
-                Vector3 eyePosition = eye.transform.position;
+            Vector3 eyePosition = eye.transform.position;
 
-                GameObject healOrbObject = GameObject.Instantiate(Components.HealOrbPrefab, eyePosition, Quaternion.identity);
-                if (healOrbObject.TryGetComponent<CarcassHealOrb>(out CarcassHealOrb healOrb))
-                    healOrb.SetOwner(this);
-            }
-            
+            GameObject healOrbObject = GameObject.Instantiate(Components.HealOrbPrefab, eyePosition, Quaternion.identity);
+            if (healOrbObject.TryGetComponent<CarcassHealOrb>(out CarcassHealOrb healOrb))
+                healOrb.SetOwner(this);
 
             if (spawnedEyes.Count == 0)
                 Enrage();
@@ -914,7 +914,10 @@ namespace CarcassEnemy
 
                 for(int i=0;i<projectileCount;i++)
                 {
-                    FireTrackingProjectileHalo().transform.parent = spr.transform;
+                    Projectile proj = FireTrackingProjectileHalo(); 
+                    proj.transform.parent = spr.transform;
+                    proj.spreaded = true;
+
                 }
                 --projectilesRemaining;
             }
@@ -934,7 +937,9 @@ namespace CarcassEnemy
             while (projectilesRemaining > 0)
             {
                 yield return new WaitForSeconds(Parameters.barrageAttackProjectileDelay);
-                FireTrackingProjectileSpherical().transform.parent = spr.transform;
+                Projectile proj = FireTrackingProjectileSpherical();
+                proj.transform.parent = spr.transform;
+                proj.spreaded = true;
                 --projectilesRemaining;
             }
 
@@ -1040,6 +1045,8 @@ namespace CarcassEnemy
 
                 spawnedEyes[i].Explode();
             }
+
+            OnDeath?.Invoke(this);
 
             StartCoroutine(DeathCoroutine());
         }
@@ -1194,6 +1201,11 @@ namespace CarcassEnemy
         }
 
         #endregion
+
+        public float GetHealth()
+        {
+            return health;
+        }
 
         public void SetTarget(Transform target)
         {

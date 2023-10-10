@@ -9,7 +9,7 @@ namespace CarcassEnemy.Patches
     public static class MachineLinker
     {
         private static HashSet<Machine> machineRelays = new HashSet<Machine>();
-        private static Dictionary<Machine, ICustomEnemy> links = new Dictionary<Machine, ICustomEnemy>();
+        private static Dictionary<Machine, IEnemy> links = new Dictionary<Machine, IEnemy>();
 
         public static void ClearCache()
         {
@@ -24,7 +24,7 @@ namespace CarcassEnemy.Patches
         [HarmonyPatch("Start"), HarmonyPrefix]
         private static bool Start(Machine __instance)
         {
-            if (!__instance.TryGetComponent<ICustomEnemy>(out ICustomEnemy enemy))
+            if (!__instance.TryGetComponent<IEnemy>(out IEnemy enemy))
                 return true;
 
             if (!machineRelays.Contains(__instance))
@@ -33,6 +33,8 @@ namespace CarcassEnemy.Patches
                 links.Add(__instance, enemy);
                 if(__instance.TryGetComponent<EnemyIdentifier>(out EnemyIdentifier eid))
                     eidLinks.Add(__instance, eid);
+
+                __instance.health = enemy.GetHealth();
                 //__instance.enabled = false; Dunno what effect this will cause, it works fine without doing this so...
                 return false;
             }
@@ -48,7 +50,12 @@ namespace CarcassEnemy.Patches
         [HarmonyPatch("Update"), HarmonyPrefix]
         private static bool Update(Machine __instance)
         {
-            return !IsCustom(__instance);
+            if (!IsCustom(__instance))
+                return true;
+
+            __instance.health = links[__instance].GetHealth();
+
+            return false;
         }
 
         [HarmonyPatch("FixedUpdate"), HarmonyPrefix]
