@@ -10,12 +10,18 @@ namespace CarcassEnemy
         private Carcass owner;
         public Carcass Owner => owner;
 
-        [Configgy.Configgable("Carcass/HealOrb")] private static float healingRange = 3.5f;
-        [Configgy.Configgable("Carcass/HealOrb")] private static float healAmount = 1.5f;
+        private static float healingRange = 3.5f;
+        private static float healAmount = 1.5f;
 
-        [Configgy.Configgable("Carcass/HealOrb")] private static float flyAcceleration = 150f;
-        [Configgy.Configgable("Carcass/HealOrb")] private static float flySpeed = 30f;
-        [Configgy.Configgable("Carcass/HealOrb")] private static float randomSpawnForce = 15f;
+        private static float flyAcceleration = 150f;
+        private static float flySpeed = 30f;
+        private static float randomSpawnForce = 15f;
+
+        [SerializeField] private bool spawnEye = true;
+        public void SetSpawnEye(bool enabled)
+        {
+            this.spawnEye = enabled;
+        }
 
         Vector3 velocity;
         private float lifeTime = 15f;
@@ -79,6 +85,8 @@ namespace CarcassEnemy
         private void Collected()
         {
             owner.Heal(healAmount);
+            if (spawnEye)
+                owner.SpawnSingleEye();
             Die();
         }
 

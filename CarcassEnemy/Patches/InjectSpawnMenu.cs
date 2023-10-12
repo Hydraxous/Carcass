@@ -10,9 +10,17 @@ namespace CarcassEnemy.Patches
     [HarmonyPatch(typeof(SpawnMenu))]
     public static class InjectSpawnMenu
     {
+        private static bool injected;
+
         [HarmonyPatch("Awake"), HarmonyPrefix]
         private static void AddEnemy(ref SpawnableObjectsDatabase ___objects)
         {
+            //Only add our content once, since the ScriptableObject's data will persist between scene loads.
+            if (injected)
+                return;
+
+            injected = true;
+
             SpawnableObject[] enemies = ___objects.enemies;
             SpawnableObject[] newEnemies = new SpawnableObject[enemies.Length + 1];
             Array.Copy(enemies, newEnemies, enemies.Length);

@@ -63,7 +63,7 @@ namespace CarcassEnemy
             transform.up = hit.normal;
         }
 
-        private void Die()
+        public void Die()
         {
             if (dying)
                 return;
@@ -117,6 +117,8 @@ namespace CarcassEnemy
 
         private void SpawnArm()
         {
+            if (dying)
+                return;
 
             Vector3 targetPosition = target.position;
             Vector3 pos = transform.position;

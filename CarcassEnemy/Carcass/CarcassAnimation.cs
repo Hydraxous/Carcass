@@ -6,18 +6,7 @@ namespace CarcassEnemy
 {
     public class CarcassAnimation : MonoBehaviour
     {
-        [SerializeField] private Carcass carcass;
-
-        public Carcass Carcass 
-        { 
-            get
-            {
-                if(carcass == null)
-                    carcass = GetComponentInParent<Carcass>();
-                return carcass;
-            } 
-        }
-
+        [SerializeField] private Transform vibrationTarget;
         [SerializeField] private Animator animator;
 
         public Animator Animator 
@@ -41,19 +30,76 @@ namespace CarcassEnemy
         private static readonly int killEyes = Animator.StringToHash("KillEyes");
         private static readonly int death = Animator.StringToHash("Death");
 
+        
+        [SerializeField] private bool vibrate;
+        public bool IsVibrating => vibrate;
+
+        [SerializeField] private float vibrationRange = 0.15f;
+
+        private Vector3 vibrationStartPosition;
+
+        public void SetVibrationRange(float value)
+        {
+            this.vibrationRange = value;
+        }
+
+        public void SetVisible(bool visible)
+        {
+            if (vibrationTarget == null)
+                return;
+
+            vibrationTarget.gameObject.SetActive(visible);
+        }
+
+        public void SetVibrating(bool shaking)
+        {
+            this.vibrate = shaking;
+
+            if(vibrationTarget != null)
+            {
+                if (shaking)
+                    vibrationStartPosition = vibrationTarget.localPosition;
+                else
+                    vibrationTarget.localPosition = vibrationStartPosition;
+            }
+        }
+
+        private void Update()
+        {
+            ResolveVibrate();
+        }
+
+
+        private void ResolveVibrate()
+        {
+            if (!vibrate)
+                return;
+
+            if (vibrationTarget == null)
+                return;
+
+            vibrationTarget.localPosition = vibrationStartPosition + UnityEngine.Random.onUnitSphere*vibrationRange;
+        }
+
+        public UnityEvent OnFireExplosiveProjectile;
+
         public void FireExplosiveProjectile()
         {
-            Carcass.FireExplosiveProjectile();
+            OnFireExplosiveProjectile?.Invoke();
         }
+
+        public UnityEvent OnSummonSigil;
 
         public void SpawnSigil()
         {
-            Carcass.SpawnSigil();
+            OnSummonSigil?.Invoke();
         }
 
-        public void AttackDone()
+        public UnityEvent OnActionDone;
+
+        public void ActionDone()
         {
-            Carcass.AttackDone();
+            OnActionDone?.Invoke();
         }
 
         public void Dash()
@@ -71,9 +117,12 @@ namespace CarcassEnemy
             Animator.Play(stunned, 0, 0);
         }
 
+        public UnityEvent OnDodge;
+
         public void Dodge()
         {
             Animator.Play(dodge, 0, 0);
+            OnDodge?.Invoke();
         }
 
         public void Spin()

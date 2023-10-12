@@ -1,14 +1,11 @@
 ﻿using BepInEx;
 using CarcassEnemy.Patches;
-using Configgy;
 using HarmonyLib;
 using UnityEngine.SceneManagement;
 
 namespace CarcassEnemy
 {
     [BepInPlugin(ConstInfo.GUID, ConstInfo.NAME, ConstInfo.VERSION)]
-    [BepInDependency("Hydraxous.HydraDynamics", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInDependency("Hydraxous.ULTRAKILL.Configgy", BepInDependency.DependencyFlags.HardDependency)]
     public class Plugin : BaseUnityPlugin
     {
         public static AssetLoader AssetLoader { get; private set; }
@@ -16,7 +13,7 @@ namespace CarcassEnemy
 
         private static Harmony harmony;
 
-        private static ConfigBuilder config = new ConfigBuilder(ConstInfo.GUID, ConstInfo.NAME);
+        //private static ConfigBuilder config = new ConfigBuilder(ConstInfo.GUID, ConstInfo.NAME);
 
         private void Awake()
         {
@@ -24,7 +21,7 @@ namespace CarcassEnemy
             AssetLoader = new AssetLoader(Properties.Resources.Carcass);
             harmony = new Harmony(ConstInfo.GUID + ".harmony");
             harmony.PatchAll();
-            config.Build();
+            //config.Build();
             SceneManager.sceneLoaded += SceneManager_sceneLoaded;
             
             Logger.LogInfo($"{ConstInfo.NAME} is loaded!");

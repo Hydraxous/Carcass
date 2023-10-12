@@ -1,6 +1,4 @@
-﻿using Configgy;
-using Configgy.UI;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -8,6 +6,7 @@ using UnityEngine.UI;
 
 namespace CarcassEnemy
 {
+    /*
     public class UIMeme : IConfigElement
     {
         private static Sprite funneImage;
@@ -64,4 +63,5 @@ namespace CarcassEnemy
 
         }
     }
+    */
 }

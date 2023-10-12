@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Configgy;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -10,6 +9,7 @@ namespace CarcassEnemy
 {
     public static class CarcassCFG
     {
+        /*
         private static CarcassParameters _parameters;
 
         [Configgy.Configgable("Carcass/Parameters", orderInList:-10)]
@@ -268,5 +268,7 @@ namespace CarcassEnemy
                 enableEnrageWildAttacks = enableEnrageWildAttacks,
             };
         }
+         */
     }
+
 }

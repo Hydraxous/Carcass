@@ -5,7 +5,7 @@ namespace CarcassEnemy
     public class CarcassParameters
     {
         //Health
-        public float maxHealth = 65f;
+        public float maxHealth = 80f;
         public float lowHealthThreshold = 0.4f;
         public float healCooldown = 9f;
 
@@ -17,12 +17,11 @@ namespace CarcassEnemy
         public float desiredFlyHeight = 7f;
         public float movementSmoothing = 8f;
         public float directionChangeDelay = 2f;
-        public float dodgeForce = 10f;
 
         //Targeting
         public float minTargetDistance = 16f;
-        public float maxTargetDistance = 21f;
-        
+        public float maxTargetDistance = 18f;
+
         //General Attack
         public float attackDelay = 3f;
         public float speedWhileAttackingMultiplier = 0.25f;
@@ -45,7 +44,7 @@ namespace CarcassEnemy
         public int eyeSpawnCount = 3;
         public float eyeSpawnDelay = 0.14f;
         public float eyeHealDelay = 0.3f;
-        public float eyeInitialHealDelay = 0.33f;
+        public float eyeInitialHealDelay = 0.4f;
         public float eyeHealPerEye = 6.666f;
         public float eyeHealth = 2f;
         public float eyeSpawnCooldown = 12f;
@@ -55,24 +54,30 @@ namespace CarcassEnemy
         public float enrageAddEnrageTimeOnStun = 8.5f;
         public float stunDamageMultiplier = 1.2f;
 
+        public float dodgeForce = 65f;
         public float dodgeCooldownTime = 2f;
-        public float dodgeLength = 0.65f;
-        public float dodgeBrakeSpeed = 2f;
+        public float dodgeLength = 1.1f;
+        public float dodgeBrakeSpeed = 0.45f;
         public float dodgeStaminaCost = 2f;
-        public float dodgeActionTimerAddition = 0.75f;
+        public float dodgeActionTimerAddition = 1.4f;
         public float dodgeMinRange = 19f;
+
 
         //Enrage
         public float enrageLength = 16f;
         public float enrageAttackTimerMultiplier = 1.5f;
-        public float enrageDashForce = 70f;
-        public float enrageDashLength = 0.6f;
-        public float enrageDashBrakeForce = 0.3f;
-        public float enrageDashMaxRange = 25f;
+        public float enrageDashForce = 100f;
+        public float enrageDashLength = 0.8f;
+        public float enrageDashBrakeForce = 0.04f;
+        public float enrageDashMaxRange = 40f;
         public float enrageDashActionDelay = 0.7f;
         public int enrageBlueProjectileCount = 4;
 
-        //Barrage :3
+        public float hookBiteDelay = 1f;
+        public float hookCooldown = 6f;
+        public float hookPlayerCooldown = 2.2f;
+        public int hookBiteYellowHP = 20;
+
         public int barrageProjectileCount = 24;
         public float barrageAttackLength = 4f;
         public float barrageAttackProjectileDelay = 0.25f;
@@ -80,11 +85,6 @@ namespace CarcassEnemy
         //CarpetBomb
         public float carpetBombLength = 3f;
         public float carpetBombProjectileDelay = 0.4f;
-
-        public float hookBiteDelay = 1f;
-        public float hookCooldown = 6f;
-        public float hookPlayerCooldown = 2.2f;
-        public int hookBiteYellowHP = 20;
 
         public bool enableEnrageWildAttacks;
     }
