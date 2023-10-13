@@ -6,18 +6,9 @@ namespace CarcassEnemy
 {
     public class CarcassAnimation : MonoBehaviour
     {
+        [SerializeField] private Carcass carcass;
         [SerializeField] private Transform vibrationTarget;
         [SerializeField] private Animator animator;
-
-        public Animator Animator 
-        { 
-            get
-            {
-                if(animator == null)
-                    animator = GetComponent<Animator>();
-                return animator;
-            } 
-        }
 
         //Animations
         private static readonly int dash = Animator.StringToHash("Dash");
@@ -30,7 +21,29 @@ namespace CarcassEnemy
         private static readonly int killEyes = Animator.StringToHash("KillEyes");
         private static readonly int death = Animator.StringToHash("Death");
 
-        
+        private static readonly string retreatingID = "Retreating";
+
+        public Carcass Carcass
+        {
+            get
+            {
+                if(carcass == null)
+                    carcass = GetComponentInParent<Carcass>();
+                return carcass;
+            }
+        }
+
+
+        public Animator Animator 
+        { 
+            get
+            {
+                if(animator == null)
+                    animator = GetComponent<Animator>();
+                return animator;
+            } 
+        }
+
         [SerializeField] private bool vibrate;
         public bool IsVibrating => vibrate;
 
@@ -64,11 +77,29 @@ namespace CarcassEnemy
             }
         }
 
+
+        private void SetRetreatingBlend(float normalizedBlend)
+        {
+            Animator.SetFloat(retreatingID, normalizedBlend);
+        }
+
         private void Update()
         {
             ResolveVibrate();
+            ResolveRetreatBlend();
         }
 
+        private void ResolveRetreatBlend()
+        {
+            Vector3 velocity = Carcass.Components.Rigidbody.velocity;
+            float speedModifier = Mathf.Min(1, velocity.magnitude/3f);
+            Vector3 carcassForward = Carcass.transform.forward;
+
+            float velocityDirectionDot = Vector3.Dot(velocity.XZ(), -carcassForward.XZ());
+            velocityDirectionDot = Mathf.Max(0, velocityDirectionDot);
+
+            SetRetreatingBlend(velocityDirectionDot*speedModifier);
+        }
 
         private void ResolveVibrate()
         {

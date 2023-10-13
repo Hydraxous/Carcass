@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Audio;
 
 namespace CarcassEnemy.Assets
 {
@@ -12,6 +13,12 @@ namespace CarcassEnemy.Assets
         public static UKAsset<GameObject> BreakParticle { get; private set; } = new UKAsset<GameObject>("Assets/Particles/Breaks/BreakParticle.prefab");
         public static UKAsset<GameObject> SpawnEffect { get; private set; } = new UKAsset<GameObject>("Assets/Particles/Spawn Effects/SpawnEffect 5.prefab");
         public static UKAsset<GameObject> LightShaft { get; private set; } = new UKAsset<GameObject>("Assets/Particles/LightShaft.prefab");
+        
+        public static UKAsset<AudioMixerGroup> MusicMixer { get; private set; } = new UKAsset<AudioMixerGroup>("MusicAudio");
+        public static UKAsset<AudioMixerGroup> DoorMixer { get; private set; } = new UKAsset<AudioMixerGroup>("DoorAudio");
+        public static UKAsset<AudioMixerGroup> GoreMixer { get; private set; } = new UKAsset<AudioMixerGroup>("GoreAudio");
+        public static UKAsset<AudioMixerGroup> AllMixer { get; private set; } = new UKAsset<AudioMixerGroup>("AllAudio");
+        public static UKAsset<AudioMixerGroup> UnfreezableMixer { get; private set; } = new UKAsset<AudioMixerGroup>("UnfreezableAudio");
 
     }
 }

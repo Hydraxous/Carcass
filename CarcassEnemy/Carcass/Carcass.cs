@@ -457,6 +457,15 @@ namespace CarcassEnemy
             }));
         }
 
+        private void ActionEndCallback()
+        {
+            if (onActionEnd != null)
+            {
+                onActionEnd.Invoke();
+                onActionEnd = null;
+            }
+        }
+
         public void Stun()
         {
             if (dead)
@@ -467,6 +476,9 @@ namespace CarcassEnemy
             inModalAction = false;
             isHealing = false;
             StopAllCoroutines();
+
+            //possible cleanup
+            ActionEndCallback();
 
             GameObject.Instantiate(CarcassAssets.CarcassStunnedFX, Components.CenterMass);
             Components.Animation.Stunned();
@@ -567,6 +579,15 @@ namespace CarcassEnemy
             lastActionName = "BlueAttack";
             Components.Animation.Shake();
             ActionStart();
+
+            GameObject psychosisFX = GameObject.Instantiate(CarcassAssets.PsychosisFX, Components.CenterMass);
+
+            onActionEnd = () =>
+            {
+                if(psychosisFX != null)
+                    GameObject.Destroy(psychosisFX);
+            };
+
             StartCoroutine(ShakeAttackCoroutine());
         }
 
@@ -712,8 +733,7 @@ namespace CarcassEnemy
             isActioning = false;
             inModalAction= false;
             Components.Animation.SetVibrating(false);
-            onActionEnd?.Invoke();
-            onActionEnd = null;
+            ActionEndCallback();
         }
 
         public void SpawnSingleEye()
@@ -739,6 +759,7 @@ namespace CarcassEnemy
                     enemyIdentifier.onDeath.AddListener(() => { OnEyeDeath(drone); });
             }
 
+            //Horrid ¯\_(ツ)_/¯
             MeshRenderer renderer = eyeObject.GetComponentsInChildren<MeshRenderer>().Where(x => x.name == "Gib_Eyeball").FirstOrDefault();
             renderer.material = CarcassAssets.CarcassEyeMaterial;
 
@@ -756,6 +777,14 @@ namespace CarcassEnemy
             healCooldownTimer = Parameters.healCooldown;
             Components.Animation.KillEyes();
 
+            GameObject healAuraFX = GameObject.Instantiate(CarcassAssets.HealAuraFX, Components.CenterMass);
+
+            onActionEnd = () =>
+            {
+                if(healAuraFX != null)
+                    GameObject.Destroy(healAuraFX);
+            };
+
             int eyeCount = spawnedEyes.Count;
 
             float totalHealTime = (Parameters.eyeHealDelay *eyeCount)+ Parameters.eyeInitialHealDelay;
@@ -772,6 +801,9 @@ namespace CarcassEnemy
 
             InvokeAfterTime(() =>
             {
+                if (healAuraFX != null)
+                    GameObject.Destroy(healAuraFX);
+
                 isHealing = false;
             },totalHealTime+0.2f);
 
@@ -907,15 +939,6 @@ namespace CarcassEnemy
 
             spawnedEyes.Remove(eye);
 
-            Vector3 eyePosition = eye.transform.position;
-
-            //GameObject healOrbObject = GameObject.Instantiate(Components.HealOrbPrefab, eyePosition, Quaternion.identity);
-            //if (healOrbObject.TryGetComponent<CarcassHealOrb>(out CarcassHealOrb healOrb))
-            //{
-              //  healOrb.SetOwner(this);
-            //    healOrb.SetSpawnEye(false);
-            //}
-
             if (spawnedEyes.Count == 0)
                 Enrage();
         }
@@ -970,7 +993,7 @@ namespace CarcassEnemy
                 --projectilesRemaining;
             }
 
-            isActioning = false;
+            ActionEnd();
         }
 
         private IEnumerator EnragedBarrageCoroutine()
@@ -1066,6 +1089,7 @@ namespace CarcassEnemy
             if (IsEnraged)
                 SetEnraged(false);
 
+            GameObject.Instantiate(CarcassAssets.CarcassScreamSFX, Components.CenterMass);
             GameObject bloodSpray = GameObject.Instantiate(CarcassAssets.BloodSprayFX, Components.CenterMass);
 
             Components.Animation.Death();
@@ -1093,6 +1117,7 @@ namespace CarcassEnemy
 
             InvokeAfterTime(() =>
             {
+                GameObject.Instantiate(CarcassAssets.CarcassScreamSFX, Components.CenterMass.transform).transform.parent = null;
                 GameObject.Instantiate(CarcassAssets.CarcassDeathFX, Components.CenterMass.transform).transform.parent = null;
                 Components.Animation.SetVisible(false);
             }, 4.6f);
@@ -1111,6 +1136,8 @@ namespace CarcassEnemy
                 return;
 
             StopAllCoroutines();
+            //Force cleanup
+            ActionEndCallback();
 
             dead = true;
             Components.EnemyIdentifier.dead = true;
@@ -1282,6 +1309,9 @@ namespace CarcassEnemy
                     if (!Components.HookDetector.IsHooked)
                         return;
 
+                    if (summonCircle != null)
+                        return;
+
                     Debug.Log("Chomp!!");
 
                     Vector3 pos = Components.CenterMass.position;
@@ -1293,7 +1323,7 @@ namespace CarcassEnemy
 
                     FieldInfo cooldown = typeof(HookArm).GetField("cooldown", BindingFlags.NonPublic | BindingFlags.Instance);
                     //NewMovement.Instance.ForceAddAntiHP(Parameters.hookBiteYellowHP); TODO: Difficulty
-                    CameraController.Instance.CameraShake(0.8f);
+                    CameraController.Instance.CameraShake(1.25f);
                     cooldown.SetValue(HookArm.Instance, Parameters.hookPlayerCooldown);
 
                 }, Parameters.hookBiteDelay);

@@ -1759,6 +1759,7 @@ MonoBehaviour:
   m_Script: {fileID: 564787528, guid: d44a77d2b96944344a6a2d06126722d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  carcass: {fileID: 2568935647269325127}
   vibrationTarget: {fileID: 1048774227846879885}
   animator: {fileID: 1048774229322381413}
   vibrate: 0

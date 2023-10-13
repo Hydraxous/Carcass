@@ -13,19 +13,31 @@ namespace CarcassEnemy.Patches
         private static bool injected;
 
         [HarmonyPatch("Awake"), HarmonyPrefix]
-        private static void AddEnemy(ref SpawnableObjectsDatabase ___objects)
+        private static void Start(ref SpawnableObjectsDatabase ___objects)
         {
             //Only add our content once, since the ScriptableObject's data will persist between scene loads.
             if (injected)
                 return;
 
-            injected = true;
-
+            SpawnableObject carcassObject = CarcassAssets.GetCarcassSpawnableObject();
             SpawnableObject[] enemies = ___objects.enemies;
+
+
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                if (enemies[i] == null)
+                    continue;
+
+                //If it exists in the database, dont need to add it.
+                if (enemies[i] == carcassObject)
+                    return;
+            }
+
             SpawnableObject[] newEnemies = new SpawnableObject[enemies.Length + 1];
             Array.Copy(enemies, newEnemies, enemies.Length);
-            newEnemies[newEnemies.Length - 1] = GetCarcassSpawnableObject();
+            newEnemies[newEnemies.Length - 1] = carcassObject;
             ___objects.enemies = newEnemies;
+            injected = true;
         }
 
         [HarmonyPatch(nameof(SpawnMenu.RebuildIcons)), HarmonyPostfix]
@@ -35,30 +47,6 @@ namespace CarcassEnemy.Patches
             ___spriteIcons.Add(icon.name, icon);
         }
 
-        private static SpawnableObject carcassSpawnable;
-
-        private static SpawnableObject GetCarcassSpawnableObject()
-        {
-            if (carcassSpawnable == null)
-                carcassSpawnable = BuildCarcassObject();
-            return carcassSpawnable;
-        }
-
-        private static SpawnableObject BuildCarcassObject()
-        {
-            SpawnableObject spawnable = ScriptableObject.CreateInstance<SpawnableObject>();
-            spawnable.name = "Carcass_SpawnableObject";
-            spawnable.identifier = "Carcass";
-            spawnable.objectName = "Carcass";
-            spawnable.gameObject = CarcassAssets.Carcass;
-            spawnable.spawnableObjectType = SpawnableObject.SpawnableObjectDataType.Enemy;
-            spawnable.description = "Carcass Enemy";
-            spawnable.enemyType = EnemyType.Filth; //EnemyType controls progress based sandbox unlocks. So this should be always unlocked.
-            spawnable.iconKey = CarcassAssets.CarcassIcon.name;
-            spawnable.backgroundColor = new Color(0.349f,0.349f,0.349f, 1f);
-            //spawnable.preview = CarcassAssets.SpawnMenuPreview;
-
-            return spawnable;
-        }
+        
     }
 }
