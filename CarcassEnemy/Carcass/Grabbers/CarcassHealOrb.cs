@@ -86,7 +86,7 @@ namespace CarcassEnemy
         {
             owner.Heal(healAmount);
             if (spawnEye)
-                owner.SpawnSingleEye();
+                owner.SpawnEye();
             Die();
         }
 

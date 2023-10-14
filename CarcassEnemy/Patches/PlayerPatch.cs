@@ -8,7 +8,7 @@ namespace CarcassEnemy.Patches
         [HarmonyPatch("Start"), HarmonyPostfix]
         public static void Postfix(NewMovement __instance)
         {
-            __instance.gameObject.AddComponent<DebugSpawner>();
+            //__instance.gameObject.AddComponent<DebugSpawner>();
         }
     }
 }

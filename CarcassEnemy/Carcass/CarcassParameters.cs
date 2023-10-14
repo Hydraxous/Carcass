@@ -72,6 +72,7 @@ namespace CarcassEnemy
         public float enrageDashMaxRange = 40f;
         public float enrageDashActionDelay = 0.7f;
         public int enrageBlueProjectileCount = 4;
+        public float enrageHookBiteSpeedMultiplier = 2f;
 
         public float hookBiteDelay = 1f;
         public float hookCooldown = 6f;

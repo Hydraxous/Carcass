@@ -22,19 +22,16 @@ namespace CarcassEnemy
                 ForEachCarcassDo((c) => c.ShakeAttack());
 
             if (Input.GetKeyDown(KeyCode.Keypad4))
-                ForEachCarcassDo((c) => c.SpawnEyes());
+                ForEachCarcassDo((c) => c.SummonEyes());
 
             if (Input.GetKeyDown(KeyCode.Keypad5))
-                ForEachCarcassDo((c) => c.HealAction());
+                ForEachCarcassDo((c) => c.StartHealing());
 
             if (Input.GetKeyDown(KeyCode.Keypad6))
                 ForEachCarcassDo((c) => c.SummonSigil());
 
             if (Input.GetKeyDown(KeyCode.Keypad7))
                 ForEachCarcassDo((c) => c.Enrage());
-
-            if (Input.GetKeyDown(KeyCode.Keypad3))
-                Carcass.DisableActionTimer = !Carcass.DisableActionTimer;
         }
 
         private void SpawnCarcass()
