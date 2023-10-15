@@ -25,7 +25,10 @@ namespace CarcassEnemy.Patches
         private static bool Start(Machine __instance)
         {
             if (!__instance.TryGetComponent<IEnemy>(out IEnemy enemy))
+            {
+                Debug.Log("Machine link fail");
                 return true;
+            }
 
             if (!machineRelays.Contains(__instance))
             {
@@ -36,9 +39,13 @@ namespace CarcassEnemy.Patches
 
                 __instance.health = enemy.GetHealth();
                 //__instance.enabled = false; Dunno what effect this will cause, it works fine without doing this so...
+
+                Debug.Log("Machine linked!");
                 return false;
             }
 
+
+            Debug.Log("Machine link Fail");
             return true;
         }
 

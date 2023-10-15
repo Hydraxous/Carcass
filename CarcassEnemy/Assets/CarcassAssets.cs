@@ -12,19 +12,6 @@ namespace CarcassEnemy.Assets
         public static Sprite CarcassIcon => Plugin.AssetLoader.LoadAsset<Sprite>("carcass_icon");
         public static Material CarcassEyeMaterial => Plugin.AssetLoader.LoadAsset<Material>("CarcassEye_Material");
 
-        //VFX
-        public static GameObject HealFX => Plugin.AssetLoader.LoadAsset<GameObject>("vfx_CarcassHeal");
-        public static GameObject HealAuraFX => Plugin.AssetLoader.LoadAsset<GameObject>("vfx_CarcassHealAura");
-        public static GameObject GenericSpawnFX => Plugin.AssetLoader.LoadAsset<GameObject>("vfx_CarcassSpawnGeneric");
-        public static GameObject PsychosisFX => Plugin.AssetLoader.LoadAsset<GameObject>("vfx_Psychosis");
-        public static GameObject SigilActivateFX => Plugin.AssetLoader.LoadAsset<GameObject>("vfx_SigilActivate");
-        public static GameObject HookSnapFX => Plugin.AssetLoader.LoadAsset<GameObject>("vfx_HookSnap");
-        public static GameObject CarcassStunnedFX => Plugin.AssetLoader.LoadAsset<GameObject>("vfx_CarcassStunned");
-        public static GameObject BloodSprayFX => Plugin.AssetLoader.LoadAsset<GameObject>("BloodSpray");
-        public static GameObject CarcassDeathFX => Plugin.AssetLoader.LoadAsset<GameObject>("vfx_CarcassDeath");
-        public static GameObject CarcassScreamSFX => Plugin.AssetLoader.LoadAsset<GameObject>("sfx_CarcassScream");
-
-
         private static SpawnableObject carcassSpawnable;
 
         public static SpawnableObject GetCarcassSpawnableObject()
@@ -46,7 +33,6 @@ namespace CarcassEnemy.Assets
             spawnable.iconKey = CarcassAssets.CarcassIcon.name;
             spawnable.gridIcon = CarcassAssets.CarcassIcon;
             spawnable.backgroundColor = new Color(0.349f, 0.349f, 0.349f, 1f);
-
 
             //Infopage stuff
             spawnable.type = "SUPREME HUSK/UNFINISHED PRIME";

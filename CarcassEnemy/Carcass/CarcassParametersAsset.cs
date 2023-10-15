@@ -6,6 +6,7 @@ namespace CarcassEnemy
     public class CarcassParametersAsset : ScriptableObject
     {
         //Match fields from CarcassParameters
+        [SerializeField] private CarcassParameters parameters;
 
         private CarcassParameters _parameters;
         public CarcassParameters Parameters 
@@ -22,10 +23,10 @@ namespace CarcassEnemy
 
         private CarcassParameters Convert()
         {
-            return new CarcassParameters()
-            {
+            if (parameters != null)
+                return parameters;
 
-            };
+            return new CarcassParameters();
         }
 
     }

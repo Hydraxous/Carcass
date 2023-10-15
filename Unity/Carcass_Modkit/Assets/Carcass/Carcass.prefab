@@ -2131,6 +2131,8 @@ MonoBehaviour:
   animation: {fileID: 4400489735874581129}
   machine: {fileID: 9056224106914097356}
   eid: {fileID: 1048774229194844935}
+  projectileDetector: {fileID: 7769254810703100843}
+  hookDetector: {fileID: 4455185281390885855}
   hitboxes:
   - {fileID: 1838780207}
   - {fileID: 1257432269}
@@ -2148,12 +2150,32 @@ MonoBehaviour:
   - {fileID: 86436322}
   - {fileID: 323800945}
   - {fileID: 2097962517}
-  summonCirclePrefab: {fileID: 6709220165027580414, guid: e6fbc80ac3c807744be2438c52957a4f,
-    type: 3}
-  projectileDetector: {fileID: 7769254810703100843}
-  hookDetector: {fileID: 4455185281390885855}
   healOrbPrefab: {fileID: 1895474634542082446, guid: 56daf45d5b2c7c84586823ca8e0aab7c,
     type: 3}
+  summonCirclePrefab: {fileID: 6709220165027580414, guid: e6fbc80ac3c807744be2438c52957a4f,
+    type: 3}
+  psychosisFXPrefab: {fileID: 8776876579076287900, guid: 80727f4ce1485104cad430f28dfc9600,
+    type: 3}
+  healAuraFX: {fileID: 3156052348789889865, guid: 2a68a6747a7c0844e9b668a3584a7265,
+    type: 3}
+  healFX: {fileID: 5384863604061709961, guid: d60b7d13d762ede439e8306da8002342, type: 3}
+  stunnedFX: {fileID: 7252300357950813108, guid: ac4498e4b6646a84cbebfabc707c6700,
+    type: 3}
+  genericSpawnFX: {fileID: 365924205459332766, guid: c44a1f7e580d2a544bd2eccb23bbe6f7,
+    type: 3}
+  hookSnapFX: {fileID: 5274849737686219417, guid: f3a526e51624037499b6ad42c18d507f,
+    type: 3}
+  bloodSprayFX: {fileID: 7943667482908396959, guid: 6198ad111f9432547ab230ca3977710b,
+    type: 3}
+  carcassScreamPrefab: {fileID: 7284037752453093137, guid: d99aced308a95af4bb26ece35467b02d,
+    type: 3}
+  carcassDeathFX: {fileID: 601820438746674886, guid: 1bf019178b630c248a729963cbc5e12b,
+    type: 3}
+  eyeMaterialOverride: {fileID: 2100000, guid: 1c69effebb4279849ba3edf67aac89e8, type: 2}
+  droneFlesh: {fileID: 0}
+  homingProjectilePrefab: {fileID: 0}
+  lobbedExplosiveProjectilePrefab: {fileID: 0}
+  lightShaftFX: {fileID: 0}
 --- !u!114 &1048774229194844935
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2170,7 +2192,7 @@ MonoBehaviour:
   enemyType: 5
   spawnIn: 1
   spawnEffect: {fileID: 0}
-  health: 60
+  health: 80
   weaknesses: []
   weaknessMultipliers: []
   totalDamageTakenMultiplier: 1

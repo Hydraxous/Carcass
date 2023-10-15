@@ -10,21 +10,28 @@ namespace CarcassEnemy
         private Carcass owner;
         public Carcass Owner => owner;
 
-        private static float healingRange = 3.5f;
-        private static float healAmount = 1.5f;
+        [SerializeField] private Transform target;
 
-        private static float flyAcceleration = 150f;
-        private static float flySpeed = 30f;
-        private static float randomSpawnForce = 15f;
+        [SerializeField] private float healingRange = 3.5f;
+        [SerializeField] private float healAmount = 1.5f;
 
-        [SerializeField] private bool spawnEye = true;
-        public void SetSpawnEye(bool enabled)
-        {
-            this.spawnEye = enabled;
-        }
+        [SerializeField] private float flyAcceleration = 150f;
+        [SerializeField] private float flySpeed = 30f;
+        [SerializeField] private float randomSpawnForce = 15f;
+
+        [SerializeField] private bool triggerEyeSpawnOnPickup = true;
 
         Vector3 velocity;
-        private float lifeTime = 15f;
+
+        public void SetSpawnEye(bool enabled)
+        {
+            this.triggerEyeSpawnOnPickup = enabled;
+        }
+
+        public void SetTarget(Transform target) 
+        {
+            this.target = target;
+        }
 
         public void SetOwner(Carcass owner)
         {
@@ -34,7 +41,10 @@ namespace CarcassEnemy
             this.owner = owner;
 
             if (owner != null)
+            {
                 owner.OnDeath += Owner_OnDeath;
+                SetTarget(owner.Components.CenterMass);
+            }
 
             Vector3 direction = UnityEngine.Random.onUnitSphere * randomSpawnForce;
             direction.y = Mathf.Abs(direction.y);
@@ -48,17 +58,10 @@ namespace CarcassEnemy
 
         private void Update()
         {
-            lifeTime -= Time.deltaTime;
-            if(lifeTime <= 0f)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            if (owner == null)
+            if (target == null)
                 return;
 
-            Vector3 targetPos = owner.Components.CenterMass.position;
+            Vector3 targetPos = target.position;
             Vector3 pos = transform.position;
 
             Vector3 toTarget = targetPos - pos;
@@ -84,18 +87,20 @@ namespace CarcassEnemy
 
         private void Collected()
         {
-            owner.Heal(healAmount);
-            if (spawnEye)
-                owner.SpawnEye();
+            if (owner != null)
+            {
+                owner.Heal(healAmount);
+                if (triggerEyeSpawnOnPickup)
+                    owner.SpawnEye();
+            }
+            
             Die();
         }
 
         private void OnDestroy()
         {
             if(owner != null)
-            {
                 owner.OnDeath -= Owner_OnDeath;
-            }
         }
 
     }

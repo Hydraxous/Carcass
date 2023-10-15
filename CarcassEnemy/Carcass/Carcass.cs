@@ -9,6 +9,7 @@ using UnityEngine;
 
 namespace CarcassEnemy
 {
+    [RequireComponent(typeof(CarcassComponents))]
     public class Carcass : MonoBehaviour, IEnemy
     {
         //References
@@ -82,7 +83,8 @@ namespace CarcassEnemy
 
         private void Start()
         {
-            SetTarget(PlayerTracker.Instance.GetTarget());
+            if(target == null)
+                SetTarget(PlayerTracker.Instance.GetTarget());
             StartCoroutine(ActionFailsafe());
             SummonEyes();
         }
@@ -367,16 +369,19 @@ namespace CarcassEnemy
             Components.Animation.Shake();
             ActionStart();
 
-            GameObject psychosisFX = GameObject.Instantiate(CarcassAssets.PsychosisFX, Components.CenterMass);
-
-            Action destroyPsychosisFX = () =>
+            if(Components.PsychosisFXPrefab != null)
             {
-                if (psychosisFX != null)
-                    GameObject.Destroy(psychosisFX);
-            };
+                GameObject psychosisFX = GameObject.Instantiate(Components.PsychosisFXPrefab, Components.CenterMass);
 
-            onInterupt = destroyPsychosisFX;
-            onActionEnd = destroyPsychosisFX;
+                Action destroyPsychosisFX = () =>
+                {
+                    if (psychosisFX != null)
+                        GameObject.Destroy(psychosisFX);
+                };
+
+                onInterupt = destroyPsychosisFX;
+                onActionEnd = destroyPsychosisFX;
+            }
 
             StartCoroutine(ShakeAttackCoroutine());
         }
@@ -443,17 +448,24 @@ namespace CarcassEnemy
             healCooldownTimer = Parameters.healCooldown;
             Components.Animation.KillEyes();
 
-            GameObject healAuraFX = GameObject.Instantiate(CarcassAssets.HealAuraFX, Components.CenterMass);
+            Action endHealing = null;
 
-            Action endHealing = () =>
+            if(Components.HealAuraFX != null)
             {
-                if (healAuraFX != null)
-                    GameObject.Destroy(healAuraFX);
+                GameObject healAuraFX = GameObject.Instantiate(Components.HealAuraFX, Components.CenterMass);
 
-                isHealing = false;
-            };
+                endHealing = () =>
+                {
+                    if (healAuraFX != null)
+                        GameObject.Destroy(healAuraFX);
 
-            onInterupt = endHealing;
+                    isHealing = false;
+                };
+
+                onInterupt = endHealing;
+            }
+
+            
 
             int eyeCount = spawnedEyes.Count;
             float totalHealTime = (Parameters.eyeHealDelay * eyeCount) + Parameters.eyeInitialHealDelay;
@@ -497,7 +509,9 @@ namespace CarcassEnemy
             Interrupt();
             ActionEndCallback();
 
-            GameObject.Instantiate(CarcassAssets.CarcassStunnedFX, Components.CenterMass);
+            if(Components.StunnedFX != null)
+                GameObject.Instantiate(Components.StunnedFX, Components.CenterMass);
+
             Components.Animation.Stunned();
             Components.Animation.SetVibrating(false);
 
@@ -596,7 +610,8 @@ namespace CarcassEnemy
 
             if (amount > 0)
             {
-                GameObject.Instantiate(CarcassAssets.HealFX, Components.CenterMass);
+                if(Components.HealFX != null)
+                    GameObject.Instantiate(Components.HealFX, Components.CenterMass);
             }
         }
 
@@ -630,7 +645,8 @@ namespace CarcassEnemy
             Vector3 eyePosition = spawnedEye.transform.position;
             spawnedEye.Explode();
             Heal(Parameters.eyeHealPerEye);
-            GameObject.Instantiate(CarcassAssets.GenericSpawnFX, eyePosition, Quaternion.identity);
+            if(Components.GenericSpawnFX != null) 
+                GameObject.Instantiate(Components.GenericSpawnFX, eyePosition, Quaternion.identity);
         }
 
         private void SetEnraged(bool enraged)
@@ -664,12 +680,17 @@ namespace CarcassEnemy
             Vector3 pos = Components.CenterMass.position;
             Vector3 player = target.position;
             Vector3 toPlayer = player - pos;
-            GameObject.Instantiate(CarcassAssets.HookSnapFX, Components.CenterMass).transform.rotation = Quaternion.LookRotation(toPlayer, Vector3.up);
+
+            if(Components.HookSnapFX != null)
+                GameObject.Instantiate(Components.HookSnapFX, Components.CenterMass).transform.rotation = Quaternion.LookRotation(toPlayer, Vector3.up);
 
             Components.HookDetector.ForceUnhook();
 
             FieldInfo cooldown = typeof(HookArm).GetField("cooldown", BindingFlags.NonPublic | BindingFlags.Instance);
-            //NewMovement.Instance.ForceAddAntiHP(Parameters.hookBiteYellowHP); TODO: Difficulty
+            
+            if(Parameters.hookBiteYellowHP > 0)
+                NewMovement.Instance.ForceAddAntiHP(Parameters.hookBiteYellowHP);
+
             CameraController.Instance.CameraShake(1.25f);
             cooldown.SetValue(HookArm.Instance, Parameters.hookPlayerCooldown);
         }
@@ -720,8 +741,12 @@ namespace CarcassEnemy
             if (IsEnraged)
                 SetEnraged(false);
 
-            GameObject.Instantiate(CarcassAssets.CarcassScreamSFX, Components.CenterMass);
-            GameObject bloodSpray = GameObject.Instantiate(CarcassAssets.BloodSprayFX, Components.CenterMass);
+            GameObject bloodSpray = null;
+            if(Components.CarcassScreamPrefab != null)
+                GameObject.Instantiate(Components.CarcassScreamPrefab, Components.CenterMass);
+
+            if (Components.BloodSprayFX != null)
+                bloodSpray = GameObject.Instantiate(Components.BloodSprayFX, Components.CenterMass);
 
             Components.Animation.Death();
             Components.Animation.SetVibrating(true);
@@ -738,18 +763,25 @@ namespace CarcassEnemy
             InvokeDelayed(SpawnLightShaft, 3.6f);
             InvokeDelayed(SpawnLightShaft, 3.7f);
 
-            InvokeDelayed(() =>
+            if (bloodSpray != null)
             {
-                foreach (ParticleSystem ps in bloodSpray.GetComponentsInChildren<ParticleSystem>())
+                InvokeDelayed(() =>
                 {
-                    ps.Stop();
-                }
-            }, 3.7f);
+                    foreach (ParticleSystem ps in bloodSpray.GetComponentsInChildren<ParticleSystem>())
+                    {
+                        ps.Stop();
+                    }
+                }, 3.7f);
+            }
 
             InvokeDelayed(() =>
             {
-                GameObject.Instantiate(CarcassAssets.CarcassScreamSFX, Components.CenterMass.transform).transform.parent = null;
-                GameObject.Instantiate(CarcassAssets.CarcassDeathFX, Components.CenterMass.transform).transform.parent = null;
+                if(Components.CarcassScreamPrefab != null)
+                    GameObject.Instantiate(Components.CarcassScreamPrefab, Components.CenterMass.transform).transform.parent = null;
+
+                if (Components.CarcassDeathFX != null)
+                    GameObject.Instantiate(Components.CarcassDeathFX, Components.CenterMass.transform).transform.parent = null;
+
                 Components.Animation.SetVisible(false);
             }, 4.6f);
 
@@ -764,7 +796,13 @@ namespace CarcassEnemy
         public void SpawnEye()
         {
             Vector3 position = GetRingSpawnPosition();
-            GameObject eyeObject = GameObject.Instantiate(UKPrefabs.DroneFlesh.Asset, position, Quaternion.identity);
+
+            GameObject eyePrefab = GetEye();
+
+            if (eyePrefab == null)
+                return;
+
+            GameObject eyeObject = GameObject.Instantiate(eyePrefab, position, Quaternion.identity);
 
             if (eyeObject.TryGetComponent<Drone>(out Drone drone))
             {
@@ -785,18 +823,37 @@ namespace CarcassEnemy
             }
 
             //Horrid ¯\_(ツ)_/¯
-            MeshRenderer renderer = eyeObject.GetComponentsInChildren<MeshRenderer>().Where(x => x.name == "Gib_Eyeball").FirstOrDefault();
-            renderer.material = CarcassAssets.CarcassEyeMaterial;
+            
+            if(Components.EyeMaterialOverride != null)
+            {
+                MeshRenderer renderer = eyeObject.GetComponentsInChildren<MeshRenderer>().Where(x => x.name == "Gib_Eyeball").FirstOrDefault();
+                renderer.material = Components.EyeMaterialOverride;
+            }
+            
+            if(Components.GenericSpawnFX != null)
+                GameObject.Instantiate(Components.GenericSpawnFX, Components.CenterMass);
+        }
 
-            GameObject.Instantiate(CarcassAssets.GenericSpawnFX, Components.CenterMass);
+        private GameObject GetEye()
+        {
+            if (Components.DroneFlesh == null)
+                return UKPrefabs.DroneFlesh.Asset;
+
+            return Components.DroneFlesh;
         }
         
         public void SpawnSigil()
         {
+            if (Components.SummonCirclePrefab == null)
+                return;
+
             GameObject newSigil = GameObject.Instantiate(Components.SummonCirclePrefab);
-            SummonCircle summonCircle = newSigil.GetComponent<SummonCircle>();
-            summonCircle.SetTarget(target);
-            summonCircle.SetOwner(this);
+            
+            if(newSigil.TryGetComponent<SummonCircle>(out SummonCircle summonCircle))
+            {
+                summonCircle.SetTarget(target);
+                summonCircle.SetOwner(this);
+            }
 
             newSigil.AddComponent<BehaviourRelay>().OnDisabled += () =>
             {
@@ -815,35 +872,67 @@ namespace CarcassEnemy
 
         public void FireExplosiveProjectile()
         {
+            GameObject prefab = GetLobbedProjectile();
+
+            if (prefab == null)
+                return;
+
             Transform tf = Components.ProjectileLobPoint;
 
             Vector3 position = tf.position;
             Vector3 direction = tf.forward;
 
-            Projectile projectile = GameObject.Instantiate<GameObject>(UKPrefabs.LobbedProjectileExplosiveHH.Asset, position, Quaternion.LookRotation(direction)).GetComponent<Projectile>();
-            projectile.target = this.target;
-            Rigidbody rb = projectile.GetComponent<Rigidbody>();
-            rb?.AddForce(transform.up * 50f, ForceMode.VelocityChange);
-            projectile.safeEnemyType = EnemyType.Mindflayer; //Hack
-                                                             //projectile.transform.SetParent(base.GetComponentInParent<GoreZone>().transform, true);
-            projectile.speed *= Components.EnemyIdentifier.totalSpeedModifier;
-            projectile.damage *= Components.EnemyIdentifier.totalDamageModifier;
+            GameObject projectileObject = GameObject.Instantiate<GameObject>(prefab, position, Quaternion.LookRotation(direction));
+            if(projectileObject.TryGetComponent<Projectile>(out Projectile projectile))
+            {
+                projectile.target = this.target;
+                
+                if(projectileObject.TryGetComponent<Rigidbody>(out Rigidbody rb))
+                    rb.AddForce(transform.up * 50f, ForceMode.VelocityChange);
+                
+                projectile.safeEnemyType = EnemyType.Mindflayer; //Hack
+                projectile.speed *= Components.EnemyIdentifier.totalSpeedModifier;
+                projectile.damage *= Components.EnemyIdentifier.totalDamageModifier;
+            }
+            
         }
 
         public Projectile FireTrackingProjectileHalo()
         {
             Vector3 position = GetRingSpawnPosition();
-            GameObject projectileGameObject = GameObject.Instantiate(UKPrefabs.HomingProjectile.Asset, position, Quaternion.LookRotation(position - Components.CenterMass.position));
-            Projectile projectile = projectileGameObject.GetComponent<Projectile>();
-            projectile.target = this.target;
-            projectile.speed = 10f * Components.EnemyIdentifier.totalSpeedModifier;
-            projectile.damage *= Components.EnemyIdentifier.totalDamageModifier;
+            GameObject prefab = GetHomingProjectile();
 
-            return projectile;
+            if (prefab == null)
+                return null;
+
+            GameObject projectileGameObject = GameObject.Instantiate(prefab, position, Quaternion.LookRotation(position - Components.CenterMass.position));
+
+            if(projectileGameObject.TryGetComponent<Projectile>(out Projectile projectile))
+            {
+                projectile.target = this.target;
+                projectile.speed = 10f * Components.EnemyIdentifier.totalSpeedModifier;
+                projectile.damage *= Components.EnemyIdentifier.totalDamageModifier;
+                return projectile;
+            }
+
+            return null;
+        }
+
+        private GameObject GetHomingProjectile()
+        {
+            if (Components.HomingProjectilePrefab == null)
+                return UKPrefabs.HomingProjectile.Asset;
+
+            return Components.HomingProjectilePrefab;
         }
 
         public Projectile FireTrackingProjectileSpherical()
         {
+            GameObject prefab = GetHomingProjectile();
+
+            if (prefab == null)
+                return null;
+
             Transform tf = Components.CenterMass;
 
             Vector3 position = tf.position;
@@ -851,18 +940,42 @@ namespace CarcassEnemy
 
             position += offset * Parameters.shakeProjectileOriginRadius;
 
-            GameObject projectileGameObject = GameObject.Instantiate(UKPrefabs.HomingProjectile.Asset, position, Quaternion.LookRotation(offset));
-            Projectile projectile = projectileGameObject.GetComponent<Projectile>();
-            projectile.target = this.target;
-            projectile.speed = 10f * Components.EnemyIdentifier.totalSpeedModifier;
-            projectile.damage *= Components.EnemyIdentifier.totalDamageModifier;
+            GameObject projectileGameObject = GameObject.Instantiate(prefab, position, Quaternion.LookRotation(position - Components.CenterMass.position));
 
-            return projectile;
+            if (projectileGameObject.TryGetComponent<Projectile>(out Projectile projectile))
+            {
+                projectile.target = this.target;
+                projectile.speed = 10f * Components.EnemyIdentifier.totalSpeedModifier;
+                projectile.damage *= Components.EnemyIdentifier.totalDamageModifier;
+                return projectile;
+            }
+
+            return null;
+        }
+
+        private GameObject GetLobbedProjectile()
+        {
+            if (Components.LobbedExplosiveProjectilePrefab == null)
+                return UKPrefabs.LobbedProjectileExplosiveHH.Asset;
+
+            return Components.LobbedExplosiveProjectilePrefab;
+        }
+
+        private GameObject GetLightShaft()
+        {
+            if (Components.LightShaftFX == null)
+                return UKPrefabs.LightShaft.Asset;
+
+            return Components.LightShaftFX;
         }
 
         private void SpawnLightShaft()
         {
-            GameObject.Instantiate(UKPrefabs.LightShaft.Asset, Components.CenterMass.position, UnityEngine.Random.rotation).transform.parent = Components.CenterMass;
+            GameObject lightShaft = GetLightShaft();
+            if (lightShaft == null)
+                return;
+
+            GameObject.Instantiate(lightShaft, Components.CenterMass.position, UnityEngine.Random.rotation).transform.parent = Components.CenterMass;
         }
 
         #endregion
@@ -901,6 +1014,9 @@ namespace CarcassEnemy
             if (isStunned)
                 damage *= Parameters.stunDamageMultiplier;
 
+
+            //Debug.Log($"Carcass hurt for {damage} damage");
+            //Debug.Log(hurtEventData);
             health = Mathf.Max(0f, health - damage);
 
             //Enrage at "low health"
@@ -995,9 +1111,11 @@ namespace CarcassEnemy
                 for(int i=0;i<projectileCount;i++)
                 {
                     Projectile proj = FireTrackingProjectileHalo(); 
-                    proj.transform.parent = spr.transform;
-                    proj.spreaded = true;
-
+                    if(proj != null)
+                    {
+                        proj.transform.parent = spr.transform;
+                        proj.spreaded = true;
+                    }
                 }
                 --projectilesRemaining;
             }
@@ -1018,8 +1136,11 @@ namespace CarcassEnemy
             {
                 yield return new WaitForSeconds(Parameters.barrageAttackProjectileDelay);
                 Projectile proj = FireTrackingProjectileSpherical();
-                proj.transform.parent = spr.transform;
-                proj.spreaded = true;
+                if(proj != null)
+                {
+                    proj.transform.parent = spr.transform;
+                    proj.spreaded = true;
+                }
                 --projectilesRemaining;
             }
 
@@ -1120,7 +1241,7 @@ namespace CarcassEnemy
             float locationDamage = GetLocationDamage(hurtData.target.tag);
             float damage = CalcDamage(hurtData.multiplier, locationDamage, hurtData.critMultiplier);
 
-            if (hurtData.hitter == "fire" || damage <= 0f)
+            if (damage <= 0f)
                 return;
 
             GoreType? goreType = null;

@@ -14,10 +14,15 @@ namespace CarcassEnemy
         [SerializeField] private GameObject healOrbPrefab;
         [SerializeField] private GameObject spawnFX;
         [SerializeField] private HashedTrigger hurtBox;
+        [SerializeField] private float normalizedStartTime = 0.25f;
 
-        private const string animationIndexName = "AttackIndex";
-        private static int attackAnimation = Animator.StringToHash("Attack");
-        private static float smoothRotSpeed = 14f;
+        private static int[] attackAnimationHashes =
+        {
+            Animator.StringToHash("Scratch"),
+            Animator.StringToHash("Punch"),
+            Animator.StringToHash("Slash"),
+            Animator.StringToHash("Grab"),
+        };
 
         private Transform target;
 
@@ -25,8 +30,7 @@ namespace CarcassEnemy
         {
             hurtBox.OnTriggerEntered += HurtBox_OnTriggerEntered;
             target = PlayerTracker.Instance.GetTarget();
-            animator.SetInteger(animationIndexName, UnityEngine.Random.Range(0,4));
-            animator.Play(attackAnimation, 0, 0f);
+            animator.Play(attackAnimationHashes[UnityEngine.Random.Range(0, attackAnimationHashes.Length)], 0, normalizedStartTime);
             
             if(spawnFX != null)
                 GameObject.Instantiate(spawnFX, transform.position, Quaternion.identity);
@@ -43,9 +47,14 @@ namespace CarcassEnemy
                 return;
 
             collected = true;
-            GameObject newOrb = GameObject.Instantiate(healOrbPrefab, transform.position, Quaternion.identity);
-            CarcassHealOrb orb = newOrb.GetComponent<CarcassHealOrb>();
-            orb.SetOwner(owner);
+            if(healOrbPrefab != null)
+            {
+                GameObject newOrb = GameObject.Instantiate(healOrbPrefab, transform.position, Quaternion.identity);
+
+                if (owner != null)
+                    if (newOrb.TryGetComponent<CarcassHealOrb>(out CarcassHealOrb orb))
+                        orb.SetOwner(owner);
+            }
         }
 
         private float timeLeft = 2f;
@@ -79,20 +88,6 @@ namespace CarcassEnemy
             GameObject.Destroy(gameObject);
         }
 
-        private void LateUpdate()
-        {
-            if (target == null)
-                return;
-            
-            Vector3 tPos = target.position;
-            Vector3 toTarget = tPos - transform.position;
-
-            Vector3 cross = Vector3.Cross(toTarget,transform.right);
-            Quaternion desiredRot = Quaternion.LookRotation(cross);
-
-            Quaternion rot = transform.rotation;
-            transform.rotation = Quaternion.RotateTowards(rot,desiredRot,Time.deltaTime * smoothRotSpeed);
-        }
 
         private Carcass owner;
         public Carcass Owner => owner;

@@ -2,6 +2,7 @@
 
 namespace CarcassEnemy
 {
+    [Serializable]
     public class CarcassParameters
     {
         //Health
@@ -38,7 +39,6 @@ namespace CarcassEnemy
         public float shakeProjectileBurstLengthInSeconds = 2.2f;
         public int shakeProjectileCount = 3;
         public int shakeProjectileGroup = 3;
-
 
         //Eye spawning
         public int eyeSpawnCount = 3;
@@ -77,7 +77,7 @@ namespace CarcassEnemy
         public float hookBiteDelay = 1f;
         public float hookCooldown = 6f;
         public float hookPlayerCooldown = 2.2f;
-        public int hookBiteYellowHP = 20;
+        public int hookBiteYellowHP = 0;
 
         public int barrageProjectileCount = 24;
         public float barrageAttackLength = 4f;

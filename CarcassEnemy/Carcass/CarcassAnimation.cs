@@ -32,8 +32,6 @@ namespace CarcassEnemy
                 return carcass;
             }
         }
-
-
         public Animator Animator 
         { 
             get
@@ -76,8 +74,6 @@ namespace CarcassEnemy
                     vibrationTarget.localPosition = vibrationStartPosition;
             }
         }
-
-
         private void SetRetreatingBlend(float normalizedBlend)
         {
             Animator.SetFloat(retreatingID, normalizedBlend);
