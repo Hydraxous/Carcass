@@ -9,8 +9,10 @@ namespace CarcassEnemy
     public class ProjectileDetector : MonoBehaviour
     {
         public event Action<Collider> OnProjectileDetected;
+
         private HashSet<Collider> detected = new HashSet<Collider>();
         
+     
         private void OnTriggerEnter(Collider other)
         {
             if (other.gameObject.layer != 14)

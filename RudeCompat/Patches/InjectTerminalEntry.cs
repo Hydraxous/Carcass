@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace CarcassEnemy.Patches
 {
+    
     [HarmonyPatch(typeof(EnemyInfoPage))]
     public static class InjectTerminalEntry
     {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace CarcassEnemy
 {
@@ -40,6 +41,7 @@ namespace CarcassEnemy
                 return;
 
             checkedColliders.Add(col);
+            UE_OnTriggerEntered?.Invoke(col);
             OnTriggerEntered?.Invoke(col);
         }
 

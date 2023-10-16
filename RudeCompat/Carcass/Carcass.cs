@@ -58,7 +58,10 @@ namespace CarcassEnemy
         //External
         private List<Drone> spawnedEyes = new List<Drone>();
         private List<GameObject> activeSigils = new List<GameObject>();
+        
+        [Header("To Stop the lag when it spawns add a FixCarcassLoadStutter component to an empty object at the root of the scene :)")]
         private GameObject spawnedEnrageEffect;
+
 
         #region UnityMessages
 
@@ -67,19 +70,18 @@ namespace CarcassEnemy
             Patcher.QueryInstance();
             health = Parameters.maxHealth;
             Components.Machine.health = Parameters.maxHealth;
-            foreach (GameObject go in components.Hitboxes)
-            {
-                Rigidbody rb = go.AddComponent<Rigidbody>();
-                rb.isKinematic = true;
-                rb.useGravity = false;
-            }
 
-            Components.ProjectileDetector.OnProjectileDetected += OnProjectileDetected;
-            Components.SpinHitbox.OnTriggerEntered += OnHurtboxEnter;
-            Components.HookDetector.OnHookstateChanged += OnHookStateChanged;
-            //SetHitboxVisibility(CarcassCFG.HitboxesVisible);
+            if(Components.ProjectileDetector != null)
+                Components.ProjectileDetector.OnProjectileDetected += OnProjectileDetected;
+            
+            if(Components.SpinHitbox != null)
+                Components.SpinHitbox.OnTriggerEntered += OnHurtboxEnter;
+            
+            if (Components.HookDetector != null)
+                Components.HookDetector.OnHookstateChanged += OnHookStateChanged;
 
-            Components.EnemyIdentifier.spawnEffect = UKPrefabs.SpawnEffect.Asset;
+            if(Components.EnemyIdentifier.spawnEffect == null)
+                Components.EnemyIdentifier.spawnEffect = UKPrefabs.SpawnEffect.Asset;
         }
 
         private void Start()
@@ -685,7 +687,7 @@ namespace CarcassEnemy
             if(Components.HookSnapFX != null)
                 GameObject.Instantiate(Components.HookSnapFX, Components.CenterMass).transform.rotation = Quaternion.LookRotation(toPlayer, Vector3.up);
 
-            Components.HookDetector.ForceUnhook();
+            Components?.HookDetector?.ForceUnhook();
 
             FieldInfo cooldown = typeof(HookArm).GetField("cooldown", BindingFlags.NonPublic | BindingFlags.Instance);
             
@@ -970,7 +972,7 @@ namespace CarcassEnemy
             return Components.LightShaftFX;
         }
 
-        private void SpawnLightShaft()
+        public void SpawnLightShaft()
         {
             GameObject lightShaft = GetLightShaft();
             if (lightShaft == null)
@@ -1034,10 +1036,11 @@ namespace CarcassEnemy
                 Die();
         }
 
-        private void OnProjectileDetected(Collider col)
+        public void OnProjectileDetected(Collider col)
         {
             //Dodge directionally
             bool canDodge = CanDodge();
+
             if (!canDodge)
                 return;
 
@@ -1064,7 +1067,7 @@ namespace CarcassEnemy
                 Enrage();
         }
 
-        private void OnHurtboxEnter(Collider col)
+        public void OnHurtboxEnter(Collider col)
         {
             if (!col.CompareTag("Player"))
                 return;
@@ -1079,7 +1082,7 @@ namespace CarcassEnemy
             NewMovement.Instance.Launch(knockForce);
         }
 
-        private void OnHookStateChanged(bool isHooked)
+        public void OnHookStateChanged(bool isHooked)
         {
             this.isHooked = isHooked;
         }
@@ -1363,7 +1366,7 @@ namespace CarcassEnemy
             this.target = target;
         }
 
-        private bool TargetLineOfSightCheck()
+        public bool TargetLineOfSightCheck()
         {
             if (target == null || isBlind)
                 return false;
