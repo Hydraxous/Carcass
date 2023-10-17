@@ -4,9 +4,9 @@ This is a custom enemy mod for Ultrakill that adds the Carcass. The Carcass is a
 # insert banner here
 # insert video here
 
-## Created by Rem_Phase02 and Hydraxous
+# Created by Rem and Hydraxous
 
-### [Rem's Twitter](https://twitter.com/Rem_Safe_Space)
+## [Rem's Twitter](https://twitter.com/Rem_Safe_Space)
 
 # insert more art or image here
 
@@ -33,7 +33,7 @@ The surgical markings on its body shows that an attempt was made to contain its 
 
 # Q: Can I add this to my custom level?
 If you would like to add this enemy to your modded/custom levels you can! Soon...
-I am currently working on a .unitypackage to post here soon.
+I am currently working on a .unitypackage to link here soon.
 
 # How to use in game
 1. Go to Sandbox or enable cheats
