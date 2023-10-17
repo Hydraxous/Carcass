@@ -1,14 +1,18 @@
 # Carcass
-This is a custom enemy mod for Ultrakill that adds the Carcass. The Carcass is a flying enemy!
+Carcass is a custom enemy mod for Ultrakill. It adds the Carcass, a flying husk enemy.
+## Created by Rem and Hydraxous
 
-# insert banner here
-# insert video here
+Rem (an extremely talented artist) and I have collaborated to make this custom enemy. I hope you enjoy it!
+Please check out Rem's art and other works!
 
-# Created by Rem and Hydraxous
+<a href="https://twitter.com/Rem_Safe_Space"><img src="https://pbs.twimg.com/profile_images/1573594058735362049/9Dqn9ALF_400x400.jpg" alt="Rem Picture" width="160"/>
+### [Rem's Twitter](https://twitter.com/Rem_Safe_Space)
 
-## [Rem's Twitter](https://twitter.com/Rem_Safe_Space)
+<img src="https://github.com/Hydraxous/Carcass/blob/master/images/carcass.png" alt="Carcass Banner" width="400"/>
 
-# insert more art or image here
+[![Carcass Video](https://img.youtube.com/vi/_25odVH7k/0.jpg)](https://www.youtube.com/watch?v=w-_25odVH7k "Carcass Enemy Mod")
+
+<img src="https://github.com/Hydraxous/Carcass/blob/master/images/Carcass_cover.png" alt="Carcass Cover" width="400"/>
 
 <details>
 <summary>TERMINAL ENTRY (SPOILER) </summary>
@@ -16,7 +20,6 @@ This is a custom enemy mod for Ultrakill that adds the Carcass. The Carcass is a
 # Carcass
 ## Type: Supreme Husk/Unfinished Prime
 
-  
 ## Data
 While it’s extremely rare to find a husk powerful enough to become a prime soul, it’s not uncommon for lesser husks to find their undoing in such power.
 
