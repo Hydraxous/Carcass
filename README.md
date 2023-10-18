@@ -10,7 +10,7 @@ Please check out Rem's art and other works!
 
 <img src="https://github.com/Hydraxous/Carcass/blob/master/images/carcass.png" alt="Carcass Banner" width="400"/>
 
-[![Carcass Video](https://img.youtube.com/vi/_25odVH7k/0.jpg)](https://www.youtube.com/watch?v=w-_25odVH7k "Carcass Enemy Mod")
+[![Carcass Video](https://img.youtube.com/vi/w-_25odVH7k/0.jpg)](https://www.youtube.com/watch?v=w-_25odVH7k "Carcass Enemy Mod")
 
 <img src="https://github.com/Hydraxous/Carcass/blob/master/images/Carcass_cover.png" alt="Carcass Cover" width="400"/>
 
