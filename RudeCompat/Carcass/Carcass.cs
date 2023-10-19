@@ -105,7 +105,7 @@ namespace CarcassEnemy
 
         private void LateUpdate()
         {
-            if (target == null || isDodging || isDead)
+            if (target == null || isDodging || isDead || isBlind)
                 return;
 
             TurnTowards(target.position, 20000f);
@@ -172,7 +172,12 @@ namespace CarcassEnemy
         private float CalculateVerticalMoveDirection(Vector3 position, float desiredHeight)
         {
             if (!Physics.Raycast(position, Vector3.down, out RaycastHit hit, Mathf.Infinity, LayerMaskDefaults.Get(LMD.Environment), QueryTriggerInteraction.Ignore))
-                return -1f;
+            {
+                if(target == null)
+                    return -1f;
+
+                return Mathf.Sign(target.position.y-position.y);
+            }
 
             float targetHeight = hit.point.y + desiredHeight;
 
@@ -468,8 +473,6 @@ namespace CarcassEnemy
                 onInterupt = endHealing;
             }
 
-            
-
             int eyeCount = spawnedEyes.Count;
             float totalHealTime = (Parameters.eyeHealDelay * eyeCount) + Parameters.eyeInitialHealDelay;
 
@@ -490,7 +493,7 @@ namespace CarcassEnemy
             }));
         }
 
-        private void Interrupt()
+        public void InterruptAction()
         {
             StopAllCoroutines();
             StartCoroutine(ActionFailsafe());
@@ -509,7 +512,7 @@ namespace CarcassEnemy
             isHealing = false;
 
             //possible cleanup
-            Interrupt();
+            InterruptAction();
             ActionEndCallback();
 
             if(Components.StunnedFX != null)
@@ -524,7 +527,7 @@ namespace CarcassEnemy
             onActionEnd = () => { isStunned = false; };
         }
 
-        private bool CanDodge()
+        public bool CanDodge()
         {
             if (isDead)
                 return false;
@@ -544,7 +547,7 @@ namespace CarcassEnemy
             return toTarget.magnitude > Parameters.dodgeMinRange;
         }
 
-        private void Dodge(Vector3 direction)
+        public void Dodge(Vector3 direction)
         {
             dodgeCooldown = Parameters.dodgeCooldownTime;
             actionTimer += Parameters.dodgeActionTimerAddition;
@@ -567,7 +570,7 @@ namespace CarcassEnemy
             }, dashTimeLeft);
         }
 
-        private void SetHitboxesActive(bool enabled)
+        public void SetHitboxesActive(bool enabled)
         {
             foreach (GameObject gameObject in Components.Hitboxes)
             {
@@ -575,7 +578,7 @@ namespace CarcassEnemy
             }
         }
 
-        private void ActionStart()
+        public void ActionStart()
         {
             isActioning = true;
             Components.Animation.SetVibrating(true);
@@ -626,7 +629,7 @@ namespace CarcassEnemy
             SetEnraged(true);
         }
 
-        private void SacrificeEyeForHealth()
+        public void SacrificeEyeForHealth()
         {
             if (isStunned || isDead || !isHealing)
                 return;
@@ -652,7 +655,7 @@ namespace CarcassEnemy
                 GameObject.Instantiate(Components.GenericSpawnFX, eyePosition, Quaternion.identity);
         }
 
-        private void SetEnraged(bool enraged)
+        public void SetEnraged(bool enraged)
         {
             bool wasEnraged = this.IsEnraged;
             this.IsEnraged = enraged;
@@ -672,7 +675,7 @@ namespace CarcassEnemy
             }
         }
 
-        private void BiteHook()
+        public void BiteHook()
         {
             if (!isHooked)
                 return;
@@ -695,7 +698,9 @@ namespace CarcassEnemy
                 NewMovement.Instance.ForceAddAntiHP(Parameters.hookBiteYellowHP);
 
             CameraController.Instance.CameraShake(1.25f);
-            cooldown.SetValue(HookArm.Instance, Parameters.hookPlayerCooldown);
+            
+            if(HookArm.Instance != null)
+                cooldown.SetValue(HookArm.Instance, Parameters.hookPlayerCooldown);
         }
 
         public void Instakill()
@@ -709,7 +714,7 @@ namespace CarcassEnemy
                 return;
 
             //Force cleanup
-            Interrupt();
+            InterruptAction();
             ActionEndCallback();
 
             isDead = true;
@@ -739,17 +744,43 @@ namespace CarcassEnemy
             DeathSequence();
         }
 
+        public void ForceCountDeath()
+        {
+            if (Components.EnemyIdentifier.dontCountAsKills)
+                return;
+
+            GoreZone gz = GoreZone.ResolveGoreZone(transform);
+
+            if (gz != null && gz.checkpoint != null)
+            {
+                gz.AddDeath();
+                gz.checkpoint.sm.kills++;
+            }
+            else
+            {
+                MonoSingleton<StatsManager>.Instance.kills++;
+            }
+
+            GetComponentInParent<ActivateNextWave>()?.AddDeadEnemy();
+        }
+
         private void DeathSequence()
         {
+            ForceCountDeath();
+
             if (IsEnraged)
                 SetEnraged(false);
 
             GameObject bloodSpray = null;
-            if(Components.CarcassScreamPrefab != null)
+
+            if (Components.CarcassScreamPrefab != null)
                 GameObject.Instantiate(Components.CarcassScreamPrefab, Components.CenterMass);
 
-            if (Components.BloodSprayFX != null)
-                bloodSpray = GameObject.Instantiate(Components.BloodSprayFX, Components.CenterMass);
+            bool goreEnabled = MonoSingleton<PrefsManager>.Instance.GetBoolLocal("bloodEnabled", false);
+
+            if (goreEnabled)
+                if (Components.BloodSprayFX != null)
+                    bloodSpray = GameObject.Instantiate(Components.BloodSprayFX, Components.CenterMass);
 
             Components.Animation.Death();
             Components.Animation.SetVibrating(true);
@@ -779,7 +810,7 @@ namespace CarcassEnemy
 
             InvokeDelayed(() =>
             {
-                if(Components.CarcassScreamPrefab != null)
+                if (Components.CarcassScreamPrefab != null)
                     GameObject.Instantiate(Components.CarcassScreamPrefab, Components.CenterMass.transform).transform.parent = null;
 
                 if (Components.CarcassDeathFX != null)
@@ -1017,10 +1048,10 @@ namespace CarcassEnemy
             if (isStunned)
                 damage *= Parameters.stunDamageMultiplier;
 
-
             //Debug.Log($"Carcass hurt for {damage} damage");
             //Debug.Log(hurtEventData);
             health = Mathf.Max(0f, health - damage);
+            Components.Machine.health = health;
 
             //Enrage at "low health"
             float lowHealth = Parameters.maxHealth * Parameters.lowHealthThreshold;

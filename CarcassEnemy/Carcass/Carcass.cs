@@ -102,7 +102,7 @@ namespace CarcassEnemy
 
         private void LateUpdate()
         {
-            if (target == null || isDodging || isDead)
+            if (target == null || isDodging || isDead || isBlind)
                 return;
 
             TurnTowards(target.position, 20000f);
@@ -169,7 +169,12 @@ namespace CarcassEnemy
         private float CalculateVerticalMoveDirection(Vector3 position, float desiredHeight)
         {
             if (!Physics.Raycast(position, Vector3.down, out RaycastHit hit, Mathf.Infinity, LayerMaskDefaults.Get(LMD.Environment), QueryTriggerInteraction.Ignore))
-                return -1f;
+            {
+                if (target == null)
+                    return -1f;
+
+                return Mathf.Sign(target.position.y - position.y);
+            }
 
             float targetHeight = hit.point.y + desiredHeight;
 
@@ -700,6 +705,27 @@ namespace CarcassEnemy
             Die();
         }
 
+        private void ForceCountDeath()
+        {
+            if (Components.EnemyIdentifier.dontCountAsKills)
+                return;
+
+            GoreZone gz = GoreZone.ResolveGoreZone(transform);
+
+            if (gz != null && gz.checkpoint != null)
+            {
+                gz.AddDeath();
+                gz.checkpoint.sm.kills++;
+            }
+            else
+            {
+                MonoSingleton<StatsManager>.Instance.kills++;
+            }
+
+            GetComponentInParent<ActivateNextWave>()?.AddDeadEnemy();
+        }
+
+
         private void Die()
         {
             if (isDead)
@@ -732,6 +758,8 @@ namespace CarcassEnemy
                 spawnedEyes[i].Explode();
             }
 
+            ForceCountDeath();
+
             OnDeath?.Invoke(this);
             DeathSequence();
         }
@@ -744,9 +772,12 @@ namespace CarcassEnemy
             GameObject bloodSpray = null;
             if(Components.CarcassScreamPrefab != null)
                 GameObject.Instantiate(Components.CarcassScreamPrefab, Components.CenterMass);
-
-            if (Components.BloodSprayFX != null)
-                bloodSpray = GameObject.Instantiate(Components.BloodSprayFX, Components.CenterMass);
+            
+            bool goreEnabled = MonoSingleton<PrefsManager>.Instance.GetBoolLocal("bloodEnabled", false);
+            
+            if(goreEnabled)
+                if (Components.BloodSprayFX != null)
+                    bloodSpray = GameObject.Instantiate(Components.BloodSprayFX, Components.CenterMass);
 
             Components.Animation.Death();
             Components.Animation.SetVibrating(true);
@@ -1018,6 +1049,7 @@ namespace CarcassEnemy
             //Debug.Log($"Carcass hurt for {damage} damage");
             //Debug.Log(hurtEventData);
             health = Mathf.Max(0f, health - damage);
+            Components.Machine.health = health;
 
             //Enrage at "low health"
             float lowHealth = Parameters.maxHealth * Parameters.lowHealthThreshold;

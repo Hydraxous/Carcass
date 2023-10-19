@@ -41,7 +41,6 @@ namespace CarcassEnemy
                 return;
 
             checkedColliders.Add(col);
-            UE_OnTriggerEntered?.Invoke(col);
             OnTriggerEntered?.Invoke(col);
         }
 

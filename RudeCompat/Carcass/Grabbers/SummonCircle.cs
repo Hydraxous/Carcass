@@ -11,14 +11,14 @@ namespace CarcassEnemy
         [SerializeField] private GameObject activateFX;
         [SerializeField] private Animator animator;
 
-        private static string animatorActivatedName = "Activated";
+        [SerializeField] private string animatorActivatedName = "Activated";
+        [SerializeField] private float lifeTime = 18f;
 
-        private float armSpawnDelay = 0.12f;
-        private static float groundOffset = 0.15f;
-        private int grabbyCount = 6;
-        private float radius = 3f;
+        [SerializeField] private float armSpawnDelay = 0.12f;
+        [SerializeField] private float groundOffset = 0.15f;
+        [SerializeField] private int grabbyCount = 6;
+        [SerializeField] private float radius = 3f;
 
-        private float lifeTime = 18f;
         private float timeUntilAttack = 0.75f;
 
         private bool dying;
@@ -26,8 +26,6 @@ namespace CarcassEnemy
         private bool activated;
 
         private Transform target;
-
-       
 
         public void SetTarget(Transform target)
         {
@@ -38,7 +36,6 @@ namespace CarcassEnemy
         {
             this.lifeTime = seconds;
         }
-
 
         private void Update()
         {
@@ -72,7 +69,7 @@ namespace CarcassEnemy
             StartCoroutine(Shrink());
         }
 
-        private void Attack()
+        public void Attack()
         {
             if (isAttacking)
                 return;
@@ -115,7 +112,7 @@ namespace CarcassEnemy
             yield return Shrink();
         }
 
-        private void SpawnArm()
+        public void SpawnArm()
         {
             if (dying)
                 return;
@@ -126,7 +123,7 @@ namespace CarcassEnemy
             Vector3 spawnPosition = transform.position;
 
             //Player is standing within circle radius.
-            if(Vector3.Magnitude(targetPosition.XZ()-pos.XZ()) < radius)
+            if(Vector3.SqrMagnitude(targetPosition.XZ()-pos.XZ()) < radius*radius)
             {
                 spawnPosition = new Vector3(targetPosition.x, pos.y, targetPosition.z);
             }
@@ -139,9 +136,14 @@ namespace CarcassEnemy
 
             float randomAngle = UnityEngine.Random.value * 360f;
             Quaternion spawnRotation = Quaternion.Euler(0, randomAngle, 0);
-            GameObject newArm = GameObject.Instantiate(grabbyHandPrefab, spawnPosition, spawnRotation);
-            GrabbyArm arm = newArm.GetComponent<GrabbyArm>();
-            arm.SetOwner(owner);
+            if (grabbyHandPrefab != null)
+            {
+                GameObject newArm = GameObject.Instantiate(grabbyHandPrefab, spawnPosition, spawnRotation);
+             
+                if (owner != null)
+                    if (newArm.TryGetComponent<GrabbyArm>(out GrabbyArm arm))
+                        arm.SetOwner(owner);
+            }
         }
 
         private IEnumerator Shrink()
@@ -168,6 +170,7 @@ namespace CarcassEnemy
         {
             this.owner = owner;
         }
+
         private void OnTriggerEnter(Collider col)
         {
             if (!col.CompareTag("Player"))

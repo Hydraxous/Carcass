@@ -59,15 +59,5 @@ namespace CarcassEnemy.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] Carcass {
-            get {
-                object obj = ResourceManager.GetObject("Carcass", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
     }
 }

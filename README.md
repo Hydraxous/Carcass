@@ -8,11 +8,11 @@ Please check out Rem's art and other works!
 <a href="https://twitter.com/Rem_Safe_Space"><img src="https://pbs.twimg.com/profile_images/1573594058735362049/9Dqn9ALF_400x400.jpg" alt="Rem Picture" width="160"/>
 ### [Rem's Twitter](https://twitter.com/Rem_Safe_Space)
 
-<img src="https://github.com/Hydraxous/Carcass/blob/master/images/carcass.png" alt="Carcass Banner" width="400"/>
+<img src="https://raw.githubusercontent.com/Hydraxous/Carcass/master/images/carcass.png" alt="Carcass Banner" width="400"/>
 
 [![Carcass Video](https://img.youtube.com/vi/w-_25odVH7k/0.jpg)](https://www.youtube.com/watch?v=w-_25odVH7k "Carcass Enemy Mod")
 
-<img src="https://github.com/Hydraxous/Carcass/blob/master/images/Carcass_cover.png" alt="Carcass Cover" width="400"/>
+<img src="https://raw.githubusercontent.com/Hydraxous/Carcass/master/images/Carcass_cover.png" alt="Carcass Cover" width="400"/>
 
 <details>
 <summary>TERMINAL ENTRY (SPOILER) </summary>
@@ -35,8 +35,9 @@ The surgical markings on its body shows that an attempt was made to contain its 
 </details>
 
 # Q: Can I add this to my custom level?
-If you would like to add this enemy to your modded/custom levels you can! Soon...
-I am currently working on a .unitypackage to link here soon.
+If you would like to add this enemy to your modded/custom levels you can!
+
+You can grab the .unitypackage [HERE](https://github.com/Hydraxous/Carcass/releases/tag/1.0.0)
 
 # How to use in game
 1. Go to Sandbox or enable cheats

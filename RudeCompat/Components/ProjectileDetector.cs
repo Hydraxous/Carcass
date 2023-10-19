@@ -9,7 +9,6 @@ namespace CarcassEnemy
     public class ProjectileDetector : MonoBehaviour
     {
         public event Action<Collider> OnProjectileDetected;
-
         private HashSet<Collider> detected = new HashSet<Collider>();
         
      

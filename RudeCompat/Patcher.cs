@@ -8,14 +8,10 @@ namespace CarcassEnemy
 {
     public class Patcher : MonoBehaviour
     {
-        public static AssetLoader AssetLoader { get; private set; }
         private static Harmony harmony;
 
         private void Patch()
         {
-            if(AssetLoader == null)
-                AssetLoader = new AssetLoader(Properties.Resources.Carcass);
-
             harmony = new Harmony(ConstInfo.GUID + ".harmony");
             harmony.PatchAll();
             SceneManager.sceneLoaded += SceneManager_sceneLoaded;
@@ -33,8 +29,6 @@ namespace CarcassEnemy
         {
             SceneManager.sceneLoaded -= SceneManager_sceneLoaded;
             harmony.UnpatchSelf();
-            AssetLoader.Unload();
-            AssetLoader = null;
             instance = null;
         }
 
