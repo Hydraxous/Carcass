@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CarcassEnemy.Components.FX;
+using System;
 using UnityEngine;
 
 namespace CarcassEnemy
@@ -40,6 +41,9 @@ namespace CarcassEnemy
 
         [SerializeField] private HookDetector hookDetector;
         public HookDetector HookDetector => hookDetector;
+
+        [SerializeField] private MaterialChanger materialChanger;
+        public MaterialChanger MaterialChanger => materialChanger;
 
         [SerializeField] private GameObject[] hitboxes;
         public GameObject[] Hitboxes
@@ -91,6 +95,9 @@ namespace CarcassEnemy
 
         [SerializeField] private Material eyeMaterialOverride;
         public Material EyeMaterialOverride => eyeMaterialOverride;
+
+        [SerializeField] private Material[] enragedMaterials;
+        public Material[] EnragedMaterials => enragedMaterials;
 
         [Header("ULTRAKILL ASSETS - Will auto-populate if left null.")]
 

@@ -16,6 +16,7 @@ namespace CarcassEnemy
         [SerializeField] private CarcassComponents components;
         [SerializeField] private Transform target;
         [SerializeField] private CarcassParametersAsset serializedParameters;
+        [SerializeField] private bool disableDeathSequence;
 
         private CarcassParameters parameters;
         public event Action<Carcass> OnDeath;
@@ -661,16 +662,19 @@ namespace CarcassEnemy
 
             if(!IsEnraged)
             {
-                enrageTimer = 0f;
+                Components?.MaterialChanger?.ResetMaterials();
 
+                enrageTimer = 0f;
                 if (spawnedEnrageEffect != null)
                     GameObject.Destroy(spawnedEnrageEffect.gameObject);
             }
             else if(!wasEnraged)
             {
+                if(Components.EnragedMaterials != null)
+                    Components?.MaterialChanger?.SetMaterialSet(Components.EnragedMaterials);
+
                 enrageTimer = Parameters.enrageLength;
                 spawnedEnrageEffect = GameObject.Instantiate(UKPrefabs.RageEffect.Asset, Components.CenterMass);
-                spawnedEnrageEffect.transform.parent = transform;//Reparent to prevent disabling while dashing.
             }
         }
 
@@ -761,6 +765,14 @@ namespace CarcassEnemy
             ForceCountDeath();
 
             OnDeath?.Invoke(this);
+
+            if(disableDeathSequence)
+            {
+                DeathVFX();
+                Remove();
+                return;
+            }
+
             DeathSequence();
         }
 
@@ -772,12 +784,9 @@ namespace CarcassEnemy
             GameObject bloodSpray = null;
             if(Components.CarcassScreamPrefab != null)
                 GameObject.Instantiate(Components.CarcassScreamPrefab, Components.CenterMass);
-            
-            bool goreEnabled = MonoSingleton<PrefsManager>.Instance.GetBoolLocal("bloodEnabled", false);
-            
-            if(goreEnabled)
-                if (Components.BloodSprayFX != null)
-                    bloodSpray = GameObject.Instantiate(Components.BloodSprayFX, Components.CenterMass);
+
+            if (Components.BloodSprayFX != null)
+                bloodSpray = GameObject.Instantiate(Components.BloodSprayFX, Components.CenterMass);
 
             Components.Animation.Death();
             Components.Animation.SetVibrating(true);
@@ -805,23 +814,29 @@ namespace CarcassEnemy
                 }, 3.7f);
             }
 
-            InvokeDelayed(() =>
-            {
-                if(Components.CarcassScreamPrefab != null)
-                    GameObject.Instantiate(Components.CarcassScreamPrefab, Components.CenterMass.transform).transform.parent = null;
-
-                if (Components.CarcassDeathFX != null)
-                    GameObject.Instantiate(Components.CarcassDeathFX, Components.CenterMass.transform).transform.parent = null;
-
-                Components.Animation.SetVisible(false);
-            }, 4.6f);
+            InvokeDelayed(DeathVFX, 4.6f);
 
             InvokeDelayed(() =>
             {
                 TimeController.Instance.SlowDown(0.001f);
-                GameObject.Destroy(gameObject);
-
+                Remove();
             }, 4.85f);
+        }
+
+        private void DeathVFX()
+        {
+            if (Components.CarcassScreamPrefab != null)
+                GameObject.Instantiate(Components.CarcassScreamPrefab, Components.CenterMass.transform).transform.parent = null;
+
+            if (Components.CarcassDeathFX != null)
+                GameObject.Instantiate(Components.CarcassDeathFX, Components.CenterMass.transform).transform.parent = null;
+
+            Components.Animation.SetVisible(false);
+        }
+
+        private void Remove()
+        {
+            GameObject.Destroy(gameObject);
         }
 
         public void SpawnEye()

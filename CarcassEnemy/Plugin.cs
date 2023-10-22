@@ -1,6 +1,8 @@
 ﻿using BepInEx;
+using CarcassEnemy.Assets;
 using CarcassEnemy.Patches;
 using HarmonyLib;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace CarcassEnemy
@@ -21,10 +23,12 @@ namespace CarcassEnemy
             AssetLoader = new AssetLoader(Properties.Resources.Carcass);
             harmony = new Harmony(ConstInfo.GUID + ".harmony");
             harmony.PatchAll();
+            
             //config.Build();
             SceneManager.sceneLoaded += SceneManager_sceneLoaded;
             
             Logger.LogInfo($"{ConstInfo.NAME} is loaded!");
+
         }
 
         private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)

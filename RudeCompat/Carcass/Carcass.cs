@@ -16,6 +16,7 @@ namespace CarcassEnemy
         [SerializeField] private CarcassComponents components;
         [SerializeField] private Transform target;
         [SerializeField] private CarcassParametersAsset serializedParameters;
+        [SerializeField] private bool disableDeathSequence;
 
         private CarcassParameters parameters;
         public event Action<Carcass> OnDeath;
@@ -58,10 +59,7 @@ namespace CarcassEnemy
         //External
         private List<Drone> spawnedEyes = new List<Drone>();
         private List<GameObject> activeSigils = new List<GameObject>();
-        
-        [Header("To Stop the lag when it spawns add a FixCarcassLoadStutter component to an empty object at the root of the scene :)")]
         private GameObject spawnedEnrageEffect;
-
 
         #region UnityMessages
 
@@ -660,18 +658,21 @@ namespace CarcassEnemy
             bool wasEnraged = this.IsEnraged;
             this.IsEnraged = enraged;
 
-            if(!IsEnraged)
+            if (!IsEnraged)
             {
-                enrageTimer = 0f;
+                Components?.MaterialChanger?.ResetMaterials();
 
+                enrageTimer = 0f;
                 if (spawnedEnrageEffect != null)
                     GameObject.Destroy(spawnedEnrageEffect.gameObject);
             }
-            else if(!wasEnraged)
+            else if (!wasEnraged)
             {
+                if (Components.EnragedMaterials != null)
+                    Components?.MaterialChanger?.SetMaterialSet(Components.EnragedMaterials);
+
                 enrageTimer = Parameters.enrageLength;
                 spawnedEnrageEffect = GameObject.Instantiate(UKPrefabs.RageEffect.Asset, Components.CenterMass);
-                spawnedEnrageEffect.transform.parent = transform;//Reparent to prevent disabling while dashing.
             }
         }
 
@@ -708,42 +709,6 @@ namespace CarcassEnemy
             Die();
         }
 
-        private void Die()
-        {
-            if (isDead)
-                return;
-
-            //Force cleanup
-            InterruptAction();
-            ActionEndCallback();
-
-            isDead = true;
-            Components.EnemyIdentifier.dead = true;
-
-
-            if (activeSigils.Count > 0)
-            {
-                foreach (GameObject circleObject in activeSigils)
-                {
-                    if (circleObject.TryGetComponent<SummonCircle>(out SummonCircle circle))
-                        circle.Die();
-                    else
-                        GameObject.Destroy(circleObject);
-                }
-            }
-
-            for (int i = 0; i < spawnedEyes.Count; i++)
-            {
-                if (spawnedEyes[i] == null)
-                    continue;
-
-                spawnedEyes[i].Explode();
-            }
-
-            OnDeath?.Invoke(this);
-            DeathSequence();
-        }
-
         public void ForceCountDeath()
         {
             if (Components.EnemyIdentifier.dontCountAsKills)
@@ -764,10 +729,53 @@ namespace CarcassEnemy
             GetComponentInParent<ActivateNextWave>()?.AddDeadEnemy();
         }
 
-        private void DeathSequence()
+        private void Die()
         {
+            if (isDead)
+                return;
+
+            //Force cleanup
+            InterruptAction();
+            ActionEndCallback();
+
+            isDead = true;
+            Components.EnemyIdentifier.dead = true;
+
+            if (activeSigils.Count > 0)
+            {
+                foreach (GameObject circleObject in activeSigils)
+                {
+                    if (circleObject.TryGetComponent<SummonCircle>(out SummonCircle circle))
+                        circle.Die();
+                    else
+                        GameObject.Destroy(circleObject);
+                }
+            }
+
+            for (int i = 0; i < spawnedEyes.Count; i++)
+            {
+                if (spawnedEyes[i] == null)
+                    continue;
+
+                spawnedEyes[i].Explode();
+            }
+
             ForceCountDeath();
 
+            OnDeath?.Invoke(this);
+
+            if (disableDeathSequence)
+            {
+                DeathVFX();
+                Remove();
+                return;
+            }
+
+            DeathSequence();
+        }
+
+        private void DeathSequence()
+        {
             if (IsEnraged)
                 SetEnraged(false);
 
@@ -808,23 +816,29 @@ namespace CarcassEnemy
                 }, 3.7f);
             }
 
-            InvokeDelayed(() =>
-            {
-                if (Components.CarcassScreamPrefab != null)
-                    GameObject.Instantiate(Components.CarcassScreamPrefab, Components.CenterMass.transform).transform.parent = null;
-
-                if (Components.CarcassDeathFX != null)
-                    GameObject.Instantiate(Components.CarcassDeathFX, Components.CenterMass.transform).transform.parent = null;
-
-                Components.Animation.SetVisible(false);
-            }, 4.6f);
+            InvokeDelayed(DeathVFX, 4.6f);
 
             InvokeDelayed(() =>
             {
                 TimeController.Instance.SlowDown(0.001f);
-                GameObject.Destroy(gameObject);
-
+                Remove();
             }, 4.85f);
+        }
+
+        private void DeathVFX()
+        {
+            if (Components.CarcassScreamPrefab != null)
+                GameObject.Instantiate(Components.CarcassScreamPrefab, Components.CenterMass.transform).transform.parent = null;
+
+            if (Components.CarcassDeathFX != null)
+                GameObject.Instantiate(Components.CarcassDeathFX, Components.CenterMass.transform).transform.parent = null;
+
+            Components.Animation.SetVisible(false);
+        }
+
+        public void Remove()
+        {
+            GameObject.Destroy(gameObject);
         }
 
         public void SpawnEye()
