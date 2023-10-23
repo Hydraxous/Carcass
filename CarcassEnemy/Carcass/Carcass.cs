@@ -740,8 +740,7 @@ namespace CarcassEnemy
             ActionEndCallback();
 
             isDead = true;
-            Components.EnemyIdentifier.dead = true;
-
+            //Components.EnemyIdentifier.dead = true;
 
             if (activeSigils.Count > 0)
             {

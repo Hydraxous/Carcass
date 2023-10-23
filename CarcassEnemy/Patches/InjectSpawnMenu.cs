@@ -19,32 +19,30 @@ namespace CarcassEnemy.Patches
             if (injected)
                 return;
 
+            SpawnableObject funkoObject = CarcassAssets.GetCarcassFunkoSpawnableObject();
             SpawnableObject carcassObject = CarcassAssets.GetCarcassSpawnableObject();
+
+
             SpawnableObject[] enemies = ___objects.enemies;
-
-
-            for (int i = 0; i < enemies.Length; i++)
-            {
-                if (enemies[i] == null)
-                    continue;
-
-                //If it exists in the database, dont need to add it.
-                if (enemies[i] == carcassObject)
-                    return;
-            }
-
             SpawnableObject[] newEnemies = new SpawnableObject[enemies.Length + 1];
             Array.Copy(enemies, newEnemies, enemies.Length);
             newEnemies[newEnemies.Length - 1] = carcassObject;
             ___objects.enemies = newEnemies;
+
+            SpawnableObject[] objects = ___objects.objects;
+            SpawnableObject[] newObjects = new SpawnableObject[objects.Length + 1];
+            Array.Copy(objects, newObjects, objects.Length);
+            newObjects[newObjects.Length - 1] = funkoObject;
+            ___objects.objects = newObjects;
+
             injected = true;
         }
 
         [HarmonyPatch(nameof(SpawnMenu.RebuildIcons)), HarmonyPostfix]
         private static void AddEnemyIcon(ref Dictionary<string,Sprite> ___spriteIcons)
         {
-            Sprite icon = CarcassAssets.CarcassIcon;
-            ___spriteIcons.Add(icon.name, icon);
+            ___spriteIcons.Add(CarcassAssets.CarcassIcon.name, CarcassAssets.CarcassIcon);
+            ___spriteIcons.Add(CarcassAssets.FunkoSpawnIcon.name, CarcassAssets.FunkoSpawnIcon);
         }
 
         

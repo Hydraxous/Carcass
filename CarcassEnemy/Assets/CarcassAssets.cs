@@ -9,10 +9,14 @@ namespace CarcassEnemy.Assets
     {
         public static GameObject Carcass => Plugin.AssetLoader.LoadAsset<GameObject>("Carcass");
         public static GameObject CarcassPreview => Plugin.AssetLoader.LoadAsset<GameObject>("CarcassPreview");
+        public static GameObject CarcassFunko => Plugin.AssetLoader.LoadAsset<GameObject>("CarcassFunko");
+        public static GameObject CarcassFunkoMesh => Plugin.AssetLoader.LoadAsset<GameObject>("CarcassFunkoMesh");
         public static Sprite CarcassIcon => Plugin.AssetLoader.LoadAsset<Sprite>("carcass_icon");
+        public static Sprite FunkoSpawnIcon => Plugin.AssetLoader.LoadAsset<Sprite>("CarcassFunkoPopSpawnIcon");
         public static Material CarcassEyeMaterial => Plugin.AssetLoader.LoadAsset<Material>("CarcassEye_Material");
 
         private static SpawnableObject carcassSpawnable;
+        private static SpawnableObject funkoSpawnable;
 
         public static SpawnableObject GetCarcassSpawnableObject()
         {
@@ -40,6 +44,27 @@ namespace CarcassEnemy.Assets
             spawnable.strategy = "- Once unleashed, Carcass’s summoning circle will activate after making contact with its target. Upon the circle’s activation, Carcass will attempt to drain and re-purpose the life energy of the target by manifesting part of itself below them. When the circle becomes active, it will emit a bright light and its symbols will change shape. The manifestations can be avoided by remaining in the air, out of their reach.\n\n- Carcass will manifest eyes to assist them in battle. While the eyes may serve well as healing, if all of the eyes are destroyed it will cause Carcass to become enraged. Typically Carcass will avoid close range combat. When enraged, it will charge and pursue you with all of its strength.";
             spawnable.preview = CarcassAssets.CarcassPreview;
 
+            return spawnable;
+        }
+
+        public static SpawnableObject GetCarcassFunkoSpawnableObject()
+        {
+            if (funkoSpawnable == null)
+                funkoSpawnable = BuildFunkoObject();
+            return funkoSpawnable;
+        }
+
+        private static SpawnableObject BuildFunkoObject()
+        {
+            SpawnableObject spawnable = ScriptableObject.CreateInstance<SpawnableObject>();
+            spawnable.name = "CarcassFunko_SpawnableObject";
+            spawnable.identifier = "Carcass Funko";
+            spawnable.objectName = "Carcass Funko";
+            spawnable.gameObject = CarcassAssets.CarcassFunko;
+            spawnable.spawnableObjectType = SpawnableObject.SpawnableObjectDataType.Object;
+            spawnable.iconKey = CarcassAssets.FunkoSpawnIcon.name;
+            spawnable.gridIcon = CarcassAssets.FunkoSpawnIcon;
+            spawnable.backgroundColor = new Color(0.349f, 0.349f, 0.349f, 1f); //TODO
             return spawnable;
         }
     }
