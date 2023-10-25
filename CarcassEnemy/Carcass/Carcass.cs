@@ -1,5 +1,6 @@
 ﻿using CarcassEnemy.Assets;
 using CarcassEnemy.Components;
+using Sandbox;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,6 +27,7 @@ namespace CarcassEnemy
         public bool IsEnraged { get; private set; } = false;
         public bool IsDashing => dashTimeLeft > 0f;
         public bool Dead => isDead;
+        public bool IsAlive() => !isDead;
 
         //State
         private float health;
@@ -1255,7 +1257,7 @@ namespace CarcassEnemy
 
         #region GoreFix Nonsense
 
-        private float GetLocationDamage(string location)
+        public float GetLocationCritDamageMultiplier(string location)
         {
             if (string.IsNullOrEmpty(location))
                 return 0f;
@@ -1271,7 +1273,7 @@ namespace CarcassEnemy
 
         private float CalcDamage(HurtEventData hurtData)
         {
-            return CalcDamage(hurtData.multiplier, GetLocationDamage(hurtData.target.tag), hurtData.critMultiplier);
+            return CalcDamage(hurtData.multiplier, GetLocationCritDamageMultiplier(hurtData.target.tag), hurtData.critMultiplier);
         }
 
         private float CalcDamage(float damageMultiplier, float locationDamage, float critMultiplier)
@@ -1284,7 +1286,7 @@ namespace CarcassEnemy
         {
             GameObject gore = null;
 
-            float locationDamage = GetLocationDamage(hurtData.target.tag);
+            float locationDamage = GetLocationCritDamageMultiplier(hurtData.target.tag);
             float damage = CalcDamage(hurtData.multiplier, locationDamage, hurtData.critMultiplier);
 
             if (damage <= 0f)
@@ -1382,6 +1384,11 @@ namespace CarcassEnemy
         public float GetHealth()
         {
             return health;
+        }
+
+        public EnemyIdentifier GetEnemyIdentifier()
+        {
+            return Components.EnemyIdentifier;
         }
 
         private Vector3 GetRingSpawnPosition()

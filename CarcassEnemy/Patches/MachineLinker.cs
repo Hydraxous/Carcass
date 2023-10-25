@@ -72,7 +72,7 @@ namespace CarcassEnemy.Patches
             if (!IsCustom(__instance))
                 return true;
 
-            string hitter = "";
+            string hitter = null;
             if (eidLinks.ContainsKey(__instance))
                 hitter = eidLinks[__instance].hitter;
 

@@ -8,5 +8,8 @@ namespace CarcassEnemy
         public void GetHurt(HurtEventData hurtEventData);
         public void Knockback(Vector3 force);
         public float GetHealth();
+        public bool IsAlive();
+        public float GetLocationCritDamageMultiplier(string location);
+        public EnemyIdentifier GetEnemyIdentifier();
     }
 }
