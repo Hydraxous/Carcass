@@ -76,7 +76,7 @@ namespace CarcassEnemy.Patches
             if (eidLinks.ContainsKey(__instance))
                 hitter = eidLinks[__instance].hitter;
 
-            //Pass logic to linked ICustomEnemy, and clean up the parameters
+            //Pass logic to linked IEnemy, and clean up the parameters
             links[__instance]?.GetHurt(new HurtEventData()
             {
                 target = target,
@@ -96,7 +96,7 @@ namespace CarcassEnemy.Patches
             if (!IsCustom(__instance))
                 return true;
 
-            //Pass logic to linked ICustomEnemy
+            //Pass logic to linked IEnemy
             links[__instance]?.Instakill();
 
             return false;
@@ -108,7 +108,7 @@ namespace CarcassEnemy.Patches
             if (!IsCustom(__instance))
                 return true;
 
-            //Pass logic to linked ICustomEnemy
+            //Pass logic to linked IEnemy
             links[__instance]?.Knockback(force);
 
             return false;

@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Configuration;
 using CarcassEnemy.Assets;
 using CarcassEnemy.Patches;
 using HarmonyLib;
@@ -16,6 +17,7 @@ namespace CarcassEnemy
         private static Harmony harmony;
 
         //private static ConfigBuilder config = new ConfigBuilder(ConstInfo.GUID, ConstInfo.NAME);
+        public static ConfigEntry<bool> EnableInCyberGrind { get; private set; }
 
         private void Awake()
         {
@@ -28,10 +30,10 @@ namespace CarcassEnemy
             SceneManager.sceneLoaded += SceneManager_sceneLoaded;
             
             Logger.LogInfo($"{ConstInfo.NAME} is loaded!");
-
+            EnableInCyberGrind = Config.Bind<bool>("General", "EnableInCyberGrind", true, "Enables Carcass In Cybergrind");
         }
 
-        private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
+    private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
         {
             if (arg0 != SceneManager.GetActiveScene())
                 return;

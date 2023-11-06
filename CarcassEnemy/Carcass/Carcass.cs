@@ -82,6 +82,12 @@ namespace CarcassEnemy
             //SetHitboxVisibility(CarcassCFG.HitboxesVisible);
 
             Components.EnemyIdentifier.spawnEffect = UKPrefabs.SpawnEffect.Asset;
+
+            if(SceneHelper.CurrentScene == "Endless") //Dont do cinematic death in Cybergrind please
+            {
+                disableDeathSequence = true;
+            }
+
         }
 
         private void Start()
