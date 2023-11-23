@@ -11,7 +11,7 @@ namespace CarcassLoader
     {
         public const string PLUGIN_NAME = "CarcassLoader";
         public const string PLUGIN_GUID = "Hydraxous.ULTRAKILL.CarcassLoader";
-        public const string PLUGIN_VERSION = "1.0.0";
+        public const string PLUGIN_VERSION = "1.0.7";
 
         const string CARCASS_RUNTIME = "CarcassEnemy.dll";
 

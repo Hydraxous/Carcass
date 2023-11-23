@@ -1,7 +1,7 @@
-﻿using System;
-using UnityEngine;
+﻿using CarcassEnemy;
 using CarcassLoader.Assets;
-using CarcassEnemy;
+using System;
+using UnityEngine;
 
 namespace CarcassLoader
 {
