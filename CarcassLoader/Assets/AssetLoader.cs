@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace CarcassEnemy
+namespace CarcassLoader
 {
     public class AssetLoader
     {

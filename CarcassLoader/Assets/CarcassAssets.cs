@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace CarcassEnemy.Assets
+namespace CarcassLoader.Assets
 {
     public static class CarcassAssets
     {

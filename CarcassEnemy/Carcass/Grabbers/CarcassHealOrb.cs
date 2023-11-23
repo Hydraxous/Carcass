@@ -23,6 +23,8 @@ namespace CarcassEnemy
 
         Vector3 velocity;
 
+        private bool targetSet;
+
         public void SetSpawnEye(bool enabled)
         {
             this.triggerEyeSpawnOnPickup = enabled;
@@ -30,6 +32,7 @@ namespace CarcassEnemy
 
         public void SetTarget(Transform target) 
         {
+            targetSet = true;
             this.target = target;
         }
 
@@ -58,6 +61,12 @@ namespace CarcassEnemy
 
         private void Update()
         {
+            if(targetSet && target == null)
+            {
+                Die();
+                return;
+            }
+
             if (target == null)
                 return;
 

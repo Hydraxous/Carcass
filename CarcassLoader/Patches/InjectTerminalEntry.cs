@@ -1,11 +1,8 @@
-﻿using CarcassEnemy.Assets;
+﻿using CarcassLoader.Assets;
 using HarmonyLib;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
 
-namespace CarcassEnemy.Patches
+namespace CarcassLoader.Patches
 {
     [HarmonyPatch(typeof(EnemyInfoPage))]
     public static class InjectTerminalEntry

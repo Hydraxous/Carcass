@@ -67,6 +67,7 @@ namespace CarcassEnemy
 
         private void Awake()
         {
+            Patcher.QueryInstance();
             health = Parameters.maxHealth;
             Components.Machine.health = Parameters.maxHealth;
             foreach (GameObject go in components.Hitboxes)
@@ -76,12 +77,19 @@ namespace CarcassEnemy
                 rb.useGravity = false;
             }
 
-            Components.ProjectileDetector.OnProjectileDetected += OnProjectileDetected;
-            Components.SpinHitbox.OnTriggerEntered += OnHurtboxEnter;
-            Components.HookDetector.OnHookstateChanged += OnHookStateChanged;
+            if (Components.ProjectileDetector != null)
+                Components.ProjectileDetector.OnProjectileDetected += OnProjectileDetected;
+
+            if (Components.SpinHitbox != null)
+                Components.SpinHitbox.OnTriggerEntered += OnHurtboxEnter;
+
+            if (Components.HookDetector != null)
+                Components.HookDetector.OnHookstateChanged += OnHookStateChanged;
+
             //SetHitboxVisibility(CarcassCFG.HitboxesVisible);
 
-            Components.EnemyIdentifier.spawnEffect = UKPrefabs.SpawnEffect.Asset;
+            if (Components.EnemyIdentifier.spawnEffect == null)
+                Components.EnemyIdentifier.spawnEffect = UKPrefabs.SpawnEffect.Asset;
 
             if(SceneHelper.CurrentScene == "Endless") //Dont do cinematic death in Cybergrind please
             {
@@ -240,6 +248,14 @@ namespace CarcassEnemy
         private Vector3 ApplyMovement(Vector3 velocity)
         {
             Vector3 travelVector = transform.right * randomStrafeDirection;
+
+            //If we see a wall in the direction we're moving, flip the strafe direction.
+            if(Physics.Raycast(Components.CenterMass.position, travelVector, out RaycastHit hit, Parameters.strafeObstacleCheckDistance, LayerMaskDefaults.Get(LMD.Environment)))
+                if(hit.distance < Parameters.strafeObstacleCheckDistance*0.5f)
+                {
+                    randomStrafeDirection = -randomStrafeDirection;
+                    travelVector = -travelVector;
+                }
 
             Vector3 targetPos = target.position;
             Vector3 pos = transform.position;
@@ -501,7 +517,7 @@ namespace CarcassEnemy
             }));
         }
 
-        private void Interrupt()
+        public void InterruptAction()
         {
             StopAllCoroutines();
             StartCoroutine(ActionFailsafe());
@@ -520,7 +536,7 @@ namespace CarcassEnemy
             isHealing = false;
 
             //possible cleanup
-            Interrupt();
+            InterruptAction();
             ActionEndCallback();
 
             if(Components.StunnedFX != null)
@@ -535,7 +551,7 @@ namespace CarcassEnemy
             onActionEnd = () => { isStunned = false; };
         }
 
-        private bool CanDodge()
+        public bool CanDodge()
         {
             if (isDead)
                 return false;
@@ -555,7 +571,7 @@ namespace CarcassEnemy
             return toTarget.magnitude > Parameters.dodgeMinRange;
         }
 
-        private void Dodge(Vector3 direction)
+        public void Dodge(Vector3 direction)
         {
             dodgeCooldown = Parameters.dodgeCooldownTime;
             actionTimer += Parameters.dodgeActionTimerAddition;
@@ -578,7 +594,7 @@ namespace CarcassEnemy
             }, dashTimeLeft);
         }
 
-        private void SetHitboxesActive(bool enabled)
+        public void SetHitboxesActive(bool enabled)
         {
             foreach (GameObject gameObject in Components.Hitboxes)
             {
@@ -586,7 +602,7 @@ namespace CarcassEnemy
             }
         }
 
-        private void ActionStart()
+        public void ActionStart()
         {
             isActioning = true;
             Components.Animation.SetVibrating(true);
@@ -631,13 +647,13 @@ namespace CarcassEnemy
 
         public void Enrage()
         {
-            if (isDead)
+            if (isDead || gameObject == null)
                 return;
 
             SetEnraged(true);
         }
 
-        private void SacrificeEyeForHealth()
+        public void SacrificeEyeForHealth()
         {
             if (isStunned || isDead || !isHealing)
                 return;
@@ -663,7 +679,7 @@ namespace CarcassEnemy
                 GameObject.Instantiate(Components.GenericSpawnFX, eyePosition, Quaternion.identity);
         }
 
-        private void SetEnraged(bool enraged)
+        public void SetEnraged(bool enraged)
         {
             bool wasEnraged = this.IsEnraged;
             this.IsEnraged = enraged;
@@ -686,7 +702,7 @@ namespace CarcassEnemy
             }
         }
 
-        private void BiteHook()
+        public void BiteHook()
         {
             if (!isHooked)
                 return;
@@ -709,7 +725,9 @@ namespace CarcassEnemy
                 NewMovement.Instance.ForceAddAntiHP(Parameters.hookBiteYellowHP);
 
             CameraController.Instance.CameraShake(1.25f);
-            cooldown.SetValue(HookArm.Instance, Parameters.hookPlayerCooldown);
+            
+            if(HookArm.Instance != null)
+                cooldown.SetValue(HookArm.Instance, Parameters.hookPlayerCooldown);
         }
 
         public void Instakill()
@@ -717,7 +735,7 @@ namespace CarcassEnemy
             Die();
         }
 
-        private void ForceCountDeath()
+        public void ForceCountDeath()
         {
             if (Components.EnemyIdentifier.dontCountAsKills)
                 return;
@@ -744,30 +762,14 @@ namespace CarcassEnemy
                 return;
 
             //Force cleanup
-            Interrupt();
+            InterruptAction();
             ActionEndCallback();
 
             isDead = true;
             //Components.EnemyIdentifier.dead = true;
 
-            if (activeSigils.Count > 0)
-            {
-                foreach (GameObject circleObject in activeSigils)
-                {
-                    if (circleObject.TryGetComponent<SummonCircle>(out SummonCircle circle))
-                        circle.Die();
-                    else
-                        GameObject.Destroy(circleObject);
-                }
-            }
-
-            for (int i = 0; i < spawnedEyes.Count; i++)
-            {
-                if (spawnedEyes[i] == null)
-                    continue;
-
-                spawnedEyes[i].Explode();
-            }
+            DestroyAllSigils();
+            DestroyAllEyes();
 
             ForceCountDeath();
 
@@ -783,6 +785,31 @@ namespace CarcassEnemy
             DeathSequence();
         }
 
+        public void DestroyAllSigils()
+        {
+            if (activeSigils.Count > 0)
+            {
+                foreach (GameObject circleObject in activeSigils)
+                {
+                    if (circleObject.TryGetComponent<SummonCircle>(out SummonCircle circle))
+                        circle.Die();
+                    else
+                        GameObject.Destroy(circleObject);
+                }
+            }
+        }
+
+        public void DestroyAllEyes()
+        {
+            for (int i = 0; i < spawnedEyes.Count; i++)
+            {
+                if (spawnedEyes[i] == null)
+                    continue;
+
+                spawnedEyes[i].Explode();
+            }
+        }
+
         private void DeathSequence()
         {
             if (IsEnraged)
@@ -792,8 +819,11 @@ namespace CarcassEnemy
             if(Components.CarcassScreamPrefab != null)
                 GameObject.Instantiate(Components.CarcassScreamPrefab, Components.CenterMass);
 
-            if (Components.BloodSprayFX != null)
-                bloodSpray = GameObject.Instantiate(Components.BloodSprayFX, Components.CenterMass);
+            bool goreEnabled = MonoSingleton<PrefsManager>.Instance.GetBoolLocal("bloodEnabled", false);
+
+            if (goreEnabled)
+                if (Components.BloodSprayFX != null)
+                    bloodSpray = GameObject.Instantiate(Components.BloodSprayFX, Components.CenterMass);
 
             Components.Animation.Death();
             Components.Animation.SetVibrating(true);
@@ -841,7 +871,7 @@ namespace CarcassEnemy
             Components.Animation.SetVisible(false);
         }
 
-        private void Remove()
+        public void Remove()
         {
             GameObject.Destroy(gameObject);
         }
@@ -855,7 +885,12 @@ namespace CarcassEnemy
             if (eyePrefab == null)
                 return;
 
+            GoreZone gz = GoreZone.ResolveGoreZone(transform);
+
             GameObject eyeObject = GameObject.Instantiate(eyePrefab, position, Quaternion.identity);
+
+            if(gz != null)
+                eyeObject.transform.SetParent(gz.transform);
 
             if (eyeObject.TryGetComponent<Drone>(out Drone drone))
             {
@@ -1108,6 +1143,9 @@ namespace CarcassEnemy
 
         private void OnEyeDeath(Drone eye)
         {
+            if (gameObject == null)
+                return;
+
             if (!spawnedEyes.Contains(eye)) //If its not in the list, we probably healed from it.
                 return;
 
@@ -1461,6 +1499,12 @@ namespace CarcassEnemy
                 }
                 return parameters;
             }
+        }
+
+        private void OnDestroy()
+        {
+            DestroyAllEyes();
+            DestroyAllSigils();
         }
     }
 }

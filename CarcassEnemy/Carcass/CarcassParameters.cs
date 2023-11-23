@@ -18,6 +18,7 @@ namespace CarcassEnemy
         public float desiredFlyHeight = 7f;
         public float movementSmoothing = 8f;
         public float directionChangeDelay = 2f;
+        public float strafeObstacleCheckDistance = 8f;
 
         //Targeting
         public float minTargetDistance = 16f;

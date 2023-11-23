@@ -1,15 +1,16 @@
-﻿using CarcassEnemy.Assets;
-using System;
+﻿using System;
 using UnityEngine;
+using CarcassLoader.Assets;
+using CarcassEnemy;
 
-namespace CarcassEnemy
+namespace CarcassLoader
 {
     //Easy way to spawn in the enemy for testing.
     //TODO add to spawn catalogue
     public class DebugSpawner : MonoBehaviour
     {
         private static GameObject carcassPrefab;
-        
+
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.J))
