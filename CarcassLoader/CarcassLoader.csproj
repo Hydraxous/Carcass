@@ -4,9 +4,14 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>CarcassLoader</AssemblyName>
     <Description>Loader mod for the CarcassRuntime with packaged assets</Description>
-    <Version>1.0.0</Version>
+    <Version>1.0.7</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
+    <Title>Carcass Loader</Title>
+    <Authors>Hydraxous</Authors>
+    <Copyright>Hydraxous</Copyright>
+    <PackageProjectUrl>https://github.com/Hydraxous/Carcass</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Hydraxous/Carcass</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
