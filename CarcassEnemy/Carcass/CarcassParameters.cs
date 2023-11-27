@@ -23,6 +23,7 @@ namespace CarcassEnemy
         //Targeting
         public float minTargetDistance = 16f;
         public float maxTargetDistance = 18f;
+        public float targetCheckDelay = 1f;
 
         //General Attack
         public float attackDelay = 3f;

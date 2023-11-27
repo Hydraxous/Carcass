@@ -29,7 +29,6 @@ namespace CarcassEnemy
         private void Start()
         {
             hurtBox.OnTriggerEntered += HurtBox_OnTriggerEntered;
-            target = PlayerTracker.Instance.GetTarget();
             animator.Play(attackAnimationHashes[UnityEngine.Random.Range(0, attackAnimationHashes.Length)], 0, normalizedStartTime);
             
             if(spawnFX != null)
@@ -38,9 +37,20 @@ namespace CarcassEnemy
 
         private bool collected;
 
+        private bool targetIsPlayer;
+
+        public void SetTarget(Transform target)
+        {
+            this.target = target;
+            targetIsPlayer = false;
+
+            if (target != null)
+                targetIsPlayer = target.GetComponentInParent<NewMovement>() != null;
+        }
+
         private void HurtBox_OnTriggerEntered(Collider obj)
         {
-            if (!obj.CompareTag("Player"))
+            if (!ColliderIsTarget(obj))
                 return;
 
             if (collected)
@@ -94,6 +104,17 @@ namespace CarcassEnemy
         public void SetOwner(Carcass carcass)
         {
             this.owner = carcass;
+        }
+
+        private bool ColliderIsTarget(Collider col)
+        {
+            if (col.CompareTag("Player"))
+                return true;
+
+            if (!targetIsPlayer && col.CompareTag("Enemy"))
+                return true;
+
+            return false;
         }
 
     }

@@ -18,6 +18,7 @@ namespace CarcassEnemy
         [SerializeField] private Transform target;
         [SerializeField] private CarcassParametersAsset serializedParameters;
         [SerializeField] private bool disableDeathSequence;
+        [SerializeField] private bool dontAttackPlayer;
 
         private CarcassParameters parameters;
         public event Action<Carcass> OnDeath;
@@ -52,6 +53,7 @@ namespace CarcassEnemy
         private float timeUntilDirectionChange = 2f;
         private float healCooldownTimer;
         private float eyeRespawnTimer;
+        private float targetCheckTimer = 1f;
 
         private Delegate lastAttack;
 
@@ -62,6 +64,11 @@ namespace CarcassEnemy
         private List<Drone> spawnedEyes = new List<Drone>();
         private List<GameObject> activeSigils = new List<GameObject>();
         private GameObject spawnedEnrageEffect;
+
+        private EnemyIdentifier targetedEnemy;
+        private static FieldInfo droneTargetField = typeof(Drone).GetField("target", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static FieldInfo droneFleshTargetField = typeof(DroneFlesh).GetField("target", BindingFlags.Instance | BindingFlags.NonPublic);
+
 
         #region UnityMessages
 
@@ -100,8 +107,7 @@ namespace CarcassEnemy
 
         private void Start()
         {
-            if(target == null)
-                SetTarget(PlayerTracker.Instance.GetTarget());
+            ResolveTarget();
             StartCoroutine(ActionFailsafe());
             SummonEyes();
         }
@@ -126,6 +132,8 @@ namespace CarcassEnemy
         }
 
         #endregion
+        
+        
 
         private void TimerUpdate()
         {
@@ -169,6 +177,16 @@ namespace CarcassEnemy
                 if(enrageTimer <= 0f)
                     SetEnraged(false);
             }
+
+            if(targetCheckTimer > 0f)
+            {
+                targetCheckTimer -= dt;
+                if (targetCheckTimer <= 0f)
+                {
+                    ResolveTarget();
+                    targetCheckTimer = Parameters.targetCheckDelay;
+                }
+            }
         }
 
         #region Movement
@@ -208,7 +226,7 @@ namespace CarcassEnemy
             
             Vector3 velocity = GetVelocity();
 
-            if (isDead || isHealing || isStunned || isBlind)
+            if (isDead || isHealing || isStunned || isBlind || target == null)
                 velocity = ApplyBrake(velocity);
             else if(IsDashing)
                 velocity = ApplyDashMovement(velocity);
@@ -256,6 +274,7 @@ namespace CarcassEnemy
                     randomStrafeDirection = -randomStrafeDirection;
                     travelVector = -travelVector;
                 }
+
 
             Vector3 targetPos = target.position;
             Vector3 pos = transform.position;
@@ -345,6 +364,9 @@ namespace CarcassEnemy
                 SummonEyes();
                 return;
             }
+
+            if (target == null)
+                return;
 
             //Peform damage attack
             Vector3 position = transform.position;
@@ -896,6 +918,7 @@ namespace CarcassEnemy
             {
                 spawnedEyes.Add(drone);
                 drone.health = Parameters.eyeHealth;
+                SetDroneTarget(drone, target);
             }
 
             if (eyeObject.TryGetComponent<EnemyIdentifier>(out EnemyIdentifier enemyIdentifier))
@@ -1064,6 +1087,40 @@ namespace CarcassEnemy
                 return;
 
             GameObject.Instantiate(lightShaft, Components.CenterMass.position, UnityEngine.Random.rotation).transform.parent = Components.CenterMass;
+        }
+
+        public void ResolveTarget()
+        {
+            if(targetedEnemy != null)
+                if(targetedEnemy.dead)
+                {
+                    target = null;
+                    targetedEnemy = null;
+                }
+
+            if (target != null)
+                return;
+
+            if (!dontAttackPlayer)
+            {
+                SetTarget(PlayerTracker.Instance.GetTarget());
+                return;
+            }
+
+            //Cache eids so we dont attack our lil eye guys or ourself.
+            HashSet<EnemyIdentifier> friendlies = new HashSet<EnemyIdentifier>(spawnedEyes.Select(x => x.GetComponent<EnemyIdentifier>()));
+            friendlies.Add(GetEnemyIdentifier());
+
+            //Gets all enemies that are not it in order of distance.
+            foreach(EnemyIdentifier eid in EnemyTracker.Instance.GetCurrentEnemies().OrderBy(x=>(x.transform.position-transform.position).sqrMagnitude))
+            {
+                //one of our eyes
+                if (friendlies.Contains(eid))
+                    continue;
+
+                SetTarget(eid.transform);
+                break;
+            }
         }
 
         #endregion
@@ -1454,9 +1511,36 @@ namespace CarcassEnemy
             return position;
         }
 
+        private void SetDroneTarget(Drone drone, Transform target)
+        {
+            droneTargetField?.SetValue(drone, target);
+            if(drone.TryGetComponent<DroneFlesh>(out DroneFlesh droneFlesh))
+            {
+                droneFleshTargetField?.SetValue(droneFlesh, target);
+            }
+        }
+
         public void SetTarget(Transform target)
         {
             this.target = target;
+            this.targetedEnemy = null;
+            
+            if(target != null)
+                if(target.TryGetComponent<EnemyIdentifier>(out EnemyIdentifier eid))
+                {
+                    this.targetedEnemy = eid;
+                }
+
+            //Set the target for our eyes.
+            foreach (Drone d in spawnedEyes)
+            {
+                SetDroneTarget(d, target);
+            }
+        }
+
+        public void SetShouldAttackPlayer(bool attackPlayer)
+        {
+            this.dontAttackPlayer = !attackPlayer;
         }
 
         private bool TargetLineOfSightCheck()

@@ -20,6 +20,7 @@ namespace CarcassLoader
 
         private static Harmony harmony;
         public static ConfigEntry<bool> EnableInCyberGrind { get; private set; }
+        public static ConfigEntry<bool> EnableDebugTool { get; private set; }
 
         private void Awake()
         {
@@ -39,6 +40,7 @@ namespace CarcassLoader
 
             Logger.LogInfo($"{PLUGIN_NAME} is loaded!");
             EnableInCyberGrind = Config.Bind<bool>("General", "EnableInCyberGrind", true, "Enables Carcass In Cybergrind");
+            EnableDebugTool = Config.Bind<bool>("General", "EnableDebugTool", false, "Enables debug tool binds");
         }
 
     
