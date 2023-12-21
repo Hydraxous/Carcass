@@ -124,6 +124,9 @@ namespace CarcassEnemy
             if (dying)
                 return;
 
+            if (target == null)
+                return;
+
             Vector3 targetPosition = target.position;
             Vector3 pos = transform.position;
 
