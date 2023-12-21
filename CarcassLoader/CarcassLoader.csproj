@@ -109,7 +109,6 @@
   <ItemGroup>
     <Folder Include="Assets\" />
     <Folder Include="Resources\" />
-    <Folder Include="Patches\" />
   </ItemGroup>
   
   <ItemGroup>
@@ -126,4 +125,11 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+  
+  <Target Name="WarnBeforeBuild" BeforeTargets="BeforeBuild">
+    <Error Condition="!Exists($(ULTRAKILLPath))" Text="ULTRAKILLPath not set, create a .csproj.user file that sets this property to compile" />
+  </Target>
+  <Target Name="CopyModDlls" AfterTargets="AfterBuild">
+    <Copy SourceFiles="$(OutDir)/$(AssemblyName).dll" DestinationFolder="$(ULTRAKILLPath)\BepInEx\Plugins\Carcass\" />
+  </Target>
 </Project>

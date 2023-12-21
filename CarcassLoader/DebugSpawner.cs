@@ -1,16 +1,16 @@
 ﻿using CarcassEnemy;
 using CarcassLoader.Assets;
+using System.Collections;
+using System.Collections.Generic;
 using System;
 using UnityEngine;
+using System.Linq;
 
 namespace CarcassLoader
 {
     //Easy way to spawn in the enemy for testing.
-    //TODO add to spawn catalogue
     public class DebugSpawner : MonoBehaviour
     {
-        private static GameObject carcassPrefab;
-
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.J))
@@ -33,6 +33,18 @@ namespace CarcassLoader
 
             if (Input.GetKeyDown(KeyCode.Keypad7))
                 ForEachCarcassDo((c) => c.Enrage());
+
+            if (Input.GetKeyDown(KeyCode.Keypad8))
+                ForEachCarcassDo((c) => 
+                {
+                    IEnumerable<EnemyIdentifier> eids = EnemyTracker.Instance.GetCurrentEnemies().Where(x=>x!=c.GetEnemyIdentifier());
+                    EnemyIdentifier target = eids.ElementAt(UnityEngine.Random.Range(0, eids.Count()));
+                    if(target != null)
+                        c.SetTarget(target.transform);
+                });
+
+            if (Input.GetKeyDown(KeyCode.Keypad9))
+                ForEachCarcassDo((c) => c.SetShouldAttackPlayer(false));
         }
 
         private void SpawnCarcass()

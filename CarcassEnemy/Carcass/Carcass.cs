@@ -4,6 +4,7 @@ using Sandbox;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -11,11 +12,10 @@ using UnityEngine;
 namespace CarcassEnemy
 {
     [RequireComponent(typeof(CarcassComponents))]
-    public class Carcass : MonoBehaviour, IEnemy
+    public class Carcass : MonoBehaviour, IEnemy, IEnrage, IAlter, IAlterOptions<bool>, IAlterOptions<float>
     {
         //References
         [SerializeField] private CarcassComponents components;
-        [SerializeField] private Transform target;
         [SerializeField] private CarcassParametersAsset serializedParameters;
         [SerializeField] private bool disableDeathSequence;
 
@@ -24,7 +24,9 @@ namespace CarcassEnemy
 
         //Public
         public float Health => health;
-        public bool IsEnraged { get; private set; } = false;
+        public bool isEnraged => m_isEnraged;
+        private bool m_isEnraged = false;
+
         public bool IsDashing => dashTimeLeft > 0f;
         public bool Dead => isDead;
         public bool IsAlive() => !isDead;
@@ -52,6 +54,7 @@ namespace CarcassEnemy
         private float timeUntilDirectionChange = 2f;
         private float healCooldownTimer;
         private float eyeRespawnTimer;
+        private float targetCheckTimer = 1f;
 
         private Delegate lastAttack;
 
@@ -62,6 +65,14 @@ namespace CarcassEnemy
         private List<Drone> spawnedEyes = new List<Drone>();
         private List<GameObject> activeSigils = new List<GameObject>();
         private GameObject spawnedEnrageEffect;
+
+        private EnemyTarget target
+        {
+            get
+            {
+                return Components.EnemyIdentifier.target;
+            }
+        }
 
         #region UnityMessages
 
@@ -88,10 +99,12 @@ namespace CarcassEnemy
 
             //SetHitboxVisibility(CarcassCFG.HitboxesVisible);
 
+            Components.EnemyIdentifier.overrideCenter = Components.CenterMass;
+
             if (Components.EnemyIdentifier.spawnEffect == null)
                 Components.EnemyIdentifier.spawnEffect = UKPrefabs.SpawnEffect.Asset;
 
-            if(SceneHelper.CurrentScene == "Endless") //Dont do cinematic death in Cybergrind please
+            if (SceneHelper.CurrentScene == "Endless") //Dont do cinematic death in Cybergrind please
             {
                 disableDeathSequence = true;
             }
@@ -100,8 +113,7 @@ namespace CarcassEnemy
 
         private void Start()
         {
-            if(target == null)
-                SetTarget(PlayerTracker.Instance.GetTarget());
+            ResolveTarget();
             StartCoroutine(ActionFailsafe());
             SummonEyes();
         }
@@ -127,6 +139,8 @@ namespace CarcassEnemy
 
         #endregion
 
+
+
         private void TimerUpdate()
         {
             if (isDead)
@@ -140,9 +154,9 @@ namespace CarcassEnemy
             dodgeCooldown -= dt;
 
             //Bite hook
-            float hookBiteTriggerTime = Parameters.hookBiteDelay / ((IsEnraged) ? Parameters.enrageHookBiteSpeedMultiplier : 1);
+            float hookBiteTriggerTime = Parameters.hookBiteDelay / ((m_isEnraged) ? Parameters.enrageHookBiteSpeedMultiplier : 1);
             hookTimer = Mathf.Clamp((hookTimer + (isHooked ? dt : -dt)), 0f, hookBiteTriggerTime);
-            if(hookTimer >= hookBiteTriggerTime && !isBlind)
+            if (hookTimer >= hookBiteTriggerTime && !isBlind)
             {
                 BiteHook();
                 hookTimer = 0f;
@@ -154,8 +168,8 @@ namespace CarcassEnemy
                 timeUntilDirectionChange = Parameters.directionChangeDelay;
             }
 
-            if(!isBlind)
-                actionTimer = Mathf.Max(0, actionTimer - (dt * ((IsEnraged) ? Parameters.enrageAttackTimerMultiplier : 1f)));
+            if (!isBlind)
+                actionTimer = Mathf.Max(0, actionTimer - (dt * ((m_isEnraged) ? Parameters.enrageAttackTimerMultiplier : 1f)));
 
             if (actionTimer <= 0f && !isStunned && !isBlind)
             {
@@ -163,11 +177,21 @@ namespace CarcassEnemy
                 actionTimer = Parameters.attackDelay;
             }
 
-            if(enrageTimer > 0f)
+            if (enrageTimer > 0f)
             {
                 enrageTimer -= dt;
-                if(enrageTimer <= 0f)
+                if (enrageTimer <= 0f)
                     SetEnraged(false);
+            }
+
+            if (targetCheckTimer > 0f)
+            {
+                targetCheckTimer -= dt;
+                if (targetCheckTimer <= 0f)
+                {
+                    ResolveTarget();
+                    targetCheckTimer = Parameters.targetCheckDelay;
+                }
             }
         }
 
@@ -205,12 +229,12 @@ namespace CarcassEnemy
         private void MovementUpdate()
         {
             SolveMovementDash();
-            
+
             Vector3 velocity = GetVelocity();
 
-            if (isDead || isHealing || isStunned || isBlind)
+            if (isDead || isHealing || isStunned || isBlind || target == null)
                 velocity = ApplyBrake(velocity);
-            else if(IsDashing)
+            else if (IsDashing)
                 velocity = ApplyDashMovement(velocity);
             else
                 velocity = ApplyMovement(velocity);
@@ -221,7 +245,7 @@ namespace CarcassEnemy
         private void SolveMovementDash()
         {
             //When enraged, dash towards V1 if out of range.
-            if (!IsEnraged || isDead || IsDashing || target == null || isActioning || isBlind)
+            if (!m_isEnraged || isDead || IsDashing || target == null || isActioning || isBlind)
                 return;
 
             Vector3 pos = transform.position;
@@ -250,12 +274,13 @@ namespace CarcassEnemy
             Vector3 travelVector = transform.right * randomStrafeDirection;
 
             //If we see a wall in the direction we're moving, flip the strafe direction.
-            if(Physics.Raycast(Components.CenterMass.position, travelVector, out RaycastHit hit, Parameters.strafeObstacleCheckDistance, LayerMaskDefaults.Get(LMD.Environment)))
-                if(hit.distance < Parameters.strafeObstacleCheckDistance*0.5f)
+            if (Physics.Raycast(Components.CenterMass.position, travelVector, out RaycastHit hit, Parameters.strafeObstacleCheckDistance, LayerMaskDefaults.Get(LMD.Environment)))
+                if (hit.distance < Parameters.strafeObstacleCheckDistance * 0.5f)
                 {
                     randomStrafeDirection = -randomStrafeDirection;
                     travelVector = -travelVector;
                 }
+
 
             Vector3 targetPos = target.position;
             Vector3 pos = transform.position;
@@ -316,7 +341,7 @@ namespace CarcassEnemy
             if (isActioning)
                 return Parameters.speedWhileAttackingMultiplier;
 
-            if (IsEnraged)
+            if (m_isEnraged)
                 return Parameters.enragedSpeedMultiplier;
 
             return 1f;
@@ -340,11 +365,14 @@ namespace CarcassEnemy
         private void PerformAction()
         {
             //If can spawn eyes. Spawn eyes.
-            if (spawnedEyes.Count < Parameters.eyeSpawnCount && eyeRespawnTimer <= 0f && !IsEnraged)
+            if (spawnedEyes.Count < Parameters.eyeSpawnCount && eyeRespawnTimer <= 0f && !m_isEnraged)
             {
                 SummonEyes();
                 return;
             }
+
+            if (target == null)
+                return;
 
             //Peform damage attack
             Vector3 position = transform.position;
@@ -361,23 +389,23 @@ namespace CarcassEnemy
 
             if (healCooldownTimer <= 0f)
                 if (spawnedEyes.Count > 0)
-                    if (health < Parameters.lowHealthThreshold*Parameters.maxHealth)
+                    if (health < Parameters.lowHealthThreshold * Parameters.maxHealth)
                         attackPool.Add(StartHealing);
 
             //In range and higher up than the player
             //if (lateralDistance < Parameters.spinMaxRange && verticalDistance < 0 && hasLineOfSight)
 
-            if (IsEnraged && Parameters.enableEnrageWildAttacks)
+            if (m_isEnraged && Parameters.enableEnrageWildAttacks)
                 attackPool.Add(CarpetBomb);
-            else if(hasLineOfSight)
+            else if (hasLineOfSight)
                 attackPool.Add(SpinAttack);
 
-            if((verticalDistance < 0f || !hasLineOfSight || IsEnraged) && (activeSigils.Count == 0 || IsEnraged))
+            if ((verticalDistance < 0f || !hasLineOfSight || m_isEnraged) && (activeSigils.Count == 0 || m_isEnraged))
                 attackPool.Add(SummonSigil);
 
-            if (IsEnraged && Parameters.enableEnrageWildAttacks)
+            if (m_isEnraged && Parameters.enableEnrageWildAttacks)
                 attackPool.Add(BarrageAttack);
-            else if(hasLineOfSight)
+            else if (hasLineOfSight)
                 attackPool.Add(ShakeAttack);
 
             if (lastAttack != null)
@@ -388,7 +416,7 @@ namespace CarcassEnemy
                 lastAttack = null;
                 return;
             }
-           
+
             int index = UnityEngine.Random.Range(0, attackPool.Count);
             lastAttack = attackPool[index];
             lastAttack.DynamicInvoke();
@@ -399,7 +427,7 @@ namespace CarcassEnemy
             Components.Animation.Shake();
             ActionStart();
 
-            if(Components.PsychosisFXPrefab != null)
+            if (Components.PsychosisFXPrefab != null)
             {
                 GameObject psychosisFX = GameObject.Instantiate(Components.PsychosisFXPrefab, Components.CenterMass);
 
@@ -480,7 +508,7 @@ namespace CarcassEnemy
 
             Action endHealing = null;
 
-            if(Components.HealAuraFX != null)
+            if (Components.HealAuraFX != null)
             {
                 GameObject healAuraFX = GameObject.Instantiate(Components.HealAuraFX, Components.CenterMass);
 
@@ -495,7 +523,7 @@ namespace CarcassEnemy
                 onInterupt = endHealing;
             }
 
-            
+
 
             int eyeCount = spawnedEyes.Count;
             float totalHealTime = (Parameters.eyeHealDelay * eyeCount) + Parameters.eyeInitialHealDelay;
@@ -539,15 +567,15 @@ namespace CarcassEnemy
             InterruptAction();
             ActionEndCallback();
 
-            if(Components.StunnedFX != null)
+            if (Components.StunnedFX != null)
                 GameObject.Instantiate(Components.StunnedFX, Components.CenterMass);
 
             Components.Animation.Stunned();
             Components.Animation.SetVibrating(false);
 
-            if (IsEnraged)
+            if (m_isEnraged)
                 enrageTimer += Parameters.enrageAddEnrageTimeOnStun;
-         
+
             onActionEnd = () => { isStunned = false; };
         }
 
@@ -585,9 +613,9 @@ namespace CarcassEnemy
             InvokeDelayed(() =>
             {
                 SetHitboxesActive(true);
-            }, dashTimeLeft/2f);
+            }, dashTimeLeft / 2f);
 
-            InvokeDelayed(()=>
+            InvokeDelayed(() =>
             {
                 ActionEnd();
                 isDodging = false;
@@ -640,7 +668,7 @@ namespace CarcassEnemy
 
             if (amount > 0)
             {
-                if(Components.HealFX != null)
+                if (Components.HealFX != null)
                     GameObject.Instantiate(Components.HealFX, Components.CenterMass);
             }
         }
@@ -651,6 +679,14 @@ namespace CarcassEnemy
                 return;
 
             SetEnraged(true);
+        }
+
+        public void UnEnrage()
+        {
+            if (isDead || gameObject == null)
+                return;
+
+            SetEnraged(false);
         }
 
         public void SacrificeEyeForHealth()
@@ -675,16 +711,16 @@ namespace CarcassEnemy
             Vector3 eyePosition = spawnedEye.transform.position;
             spawnedEye.Explode();
             Heal(Parameters.eyeHealPerEye);
-            if(Components.GenericSpawnFX != null) 
+            if (Components.GenericSpawnFX != null)
                 GameObject.Instantiate(Components.GenericSpawnFX, eyePosition, Quaternion.identity);
         }
 
         public void SetEnraged(bool enraged)
         {
-            bool wasEnraged = this.IsEnraged;
-            this.IsEnraged = enraged;
+            bool wasEnraged = this.m_isEnraged;
+            this.m_isEnraged = enraged;
 
-            if(!IsEnraged)
+            if (!m_isEnraged)
             {
                 Components?.MaterialChanger?.ResetMaterials();
 
@@ -692,9 +728,9 @@ namespace CarcassEnemy
                 if (spawnedEnrageEffect != null)
                     GameObject.Destroy(spawnedEnrageEffect.gameObject);
             }
-            else if(!wasEnraged)
+            else if (!wasEnraged)
             {
-                if(Components.EnragedMaterials != null)
+                if (Components.EnragedMaterials != null)
                     Components?.MaterialChanger?.SetMaterialSet(Components.EnragedMaterials);
 
                 enrageTimer = Parameters.enrageLength;
@@ -714,19 +750,19 @@ namespace CarcassEnemy
             Vector3 player = target.position;
             Vector3 toPlayer = player - pos;
 
-            if(Components.HookSnapFX != null)
+            if (Components.HookSnapFX != null)
                 GameObject.Instantiate(Components.HookSnapFX, Components.CenterMass).transform.rotation = Quaternion.LookRotation(toPlayer, Vector3.up);
 
             Components.HookDetector.ForceUnhook();
 
             FieldInfo cooldown = typeof(HookArm).GetField("cooldown", BindingFlags.NonPublic | BindingFlags.Instance);
-            
-            if(Parameters.hookBiteYellowHP > 0)
+
+            if (Parameters.hookBiteYellowHP > 0)
                 NewMovement.Instance.ForceAddAntiHP(Parameters.hookBiteYellowHP);
 
             CameraController.Instance.CameraShake(1.25f);
-            
-            if(HookArm.Instance != null)
+
+            if (HookArm.Instance != null)
                 cooldown.SetValue(HookArm.Instance, Parameters.hookPlayerCooldown);
         }
 
@@ -775,7 +811,7 @@ namespace CarcassEnemy
 
             OnDeath?.Invoke(this);
 
-            if(disableDeathSequence)
+            if (disableDeathSequence)
             {
                 DeathVFX();
                 Remove();
@@ -812,11 +848,11 @@ namespace CarcassEnemy
 
         private void DeathSequence()
         {
-            if (IsEnraged)
+            if (m_isEnraged)
                 SetEnraged(false);
 
             GameObject bloodSpray = null;
-            if(Components.CarcassScreamPrefab != null)
+            if (Components.CarcassScreamPrefab != null)
                 GameObject.Instantiate(Components.CarcassScreamPrefab, Components.CenterMass);
 
             bool goreEnabled = MonoSingleton<PrefsManager>.Instance.GetBoolLocal("bloodEnabled", false);
@@ -889,13 +925,14 @@ namespace CarcassEnemy
 
             GameObject eyeObject = GameObject.Instantiate(eyePrefab, position, Quaternion.identity);
 
-            if(gz != null)
+            if (gz != null)
                 eyeObject.transform.SetParent(gz.transform);
 
             if (eyeObject.TryGetComponent<Drone>(out Drone drone))
             {
                 spawnedEyes.Add(drone);
                 drone.health = Parameters.eyeHealth;
+                SetDroneTarget(drone, target);
             }
 
             if (eyeObject.TryGetComponent<EnemyIdentifier>(out EnemyIdentifier enemyIdentifier))
@@ -911,14 +948,14 @@ namespace CarcassEnemy
             }
 
             //Horrid ¯\_(ツ)_/¯
-            
-            if(Components.EyeMaterialOverride != null)
+
+            if (Components.EyeMaterialOverride != null)
             {
                 MeshRenderer renderer = eyeObject.GetComponentsInChildren<MeshRenderer>().Where(x => x.name == "Gib_Eyeball").FirstOrDefault();
                 renderer.material = Components.EyeMaterialOverride;
             }
-            
-            if(Components.GenericSpawnFX != null)
+
+            if (Components.GenericSpawnFX != null)
                 GameObject.Instantiate(Components.GenericSpawnFX, Components.CenterMass);
         }
 
@@ -929,17 +966,20 @@ namespace CarcassEnemy
 
             return Components.DroneFlesh;
         }
-        
+
         public void SpawnSigil()
         {
             if (Components.SummonCirclePrefab == null)
                 return;
 
+            if (!target.isValid)
+                return;
+
             GameObject newSigil = GameObject.Instantiate(Components.SummonCirclePrefab);
-            
-            if(newSigil.TryGetComponent<SummonCircle>(out SummonCircle summonCircle))
+
+            if (newSigil.TryGetComponent<SummonCircle>(out SummonCircle summonCircle))
             {
-                summonCircle.SetTarget(target);
+                summonCircle.SetTarget(target.targetTransform);
                 summonCircle.SetOwner(this);
             }
 
@@ -971,18 +1011,18 @@ namespace CarcassEnemy
             Vector3 direction = tf.forward;
 
             GameObject projectileObject = GameObject.Instantiate<GameObject>(prefab, position, Quaternion.LookRotation(direction));
-            if(projectileObject.TryGetComponent<Projectile>(out Projectile projectile))
+            if (projectileObject.TryGetComponent<Projectile>(out Projectile projectile))
             {
-                projectile.target = this.target;
-                
-                if(projectileObject.TryGetComponent<Rigidbody>(out Rigidbody rb))
+                projectile.target = target;
+
+                if (projectileObject.TryGetComponent<Rigidbody>(out Rigidbody rb))
                     rb.AddForce(transform.up * 50f, ForceMode.VelocityChange);
-                
+
                 projectile.safeEnemyType = EnemyType.Mindflayer; //Hack
                 projectile.speed *= Components.EnemyIdentifier.totalSpeedModifier;
                 projectile.damage *= Components.EnemyIdentifier.totalDamageModifier;
             }
-            
+
         }
 
         public Projectile FireTrackingProjectileHalo()
@@ -995,9 +1035,9 @@ namespace CarcassEnemy
 
             GameObject projectileGameObject = GameObject.Instantiate(prefab, position, Quaternion.LookRotation(position - Components.CenterMass.position));
 
-            if(projectileGameObject.TryGetComponent<Projectile>(out Projectile projectile))
+            if (projectileGameObject.TryGetComponent<Projectile>(out Projectile projectile))
             {
-                projectile.target = this.target;
+                projectile.target = target;
                 projectile.speed = 10f * Components.EnemyIdentifier.totalSpeedModifier;
                 projectile.damage *= Components.EnemyIdentifier.totalDamageModifier;
                 return projectile;
@@ -1032,7 +1072,7 @@ namespace CarcassEnemy
 
             if (projectileGameObject.TryGetComponent<Projectile>(out Projectile projectile))
             {
-                projectile.target = this.target;
+                projectile.target = target;
                 projectile.speed = 10f * Components.EnemyIdentifier.totalSpeedModifier;
                 projectile.damage *= Components.EnemyIdentifier.totalDamageModifier;
                 return projectile;
@@ -1066,6 +1106,27 @@ namespace CarcassEnemy
             GameObject.Instantiate(lightShaft, Components.CenterMass.position, UnityEngine.Random.rotation).transform.parent = Components.CenterMass;
         }
 
+        public void ResolveTarget()
+        {
+            if (target != null)
+                return;
+
+            //Cache eids so we dont attack our lil eye guys or ourself.
+            HashSet<EnemyIdentifier> friendlies = new HashSet<EnemyIdentifier>(spawnedEyes.Select(x => x.GetComponent<EnemyIdentifier>()));
+            friendlies.Add(GetEnemyIdentifier());
+
+            //Gets all enemies that are not it in order of distance.
+            foreach (EnemyIdentifier eid in EnemyTracker.Instance.GetCurrentEnemies().OrderBy(x => (x.transform.position - transform.position).sqrMagnitude))
+            {
+                //one of our eyes
+                if (friendlies.Contains(eid))
+                    continue;
+
+                SetTarget(eid.transform);
+                break;
+            }
+        }
+
         #endregion
 
         #region Listeners
@@ -1090,8 +1151,8 @@ namespace CarcassEnemy
                 return;
 
             float damage = CalcDamage(hurtEventData);
-            
-            if(!string.IsNullOrEmpty(hurtEventData.hitter))
+
+            if (!string.IsNullOrEmpty(hurtEventData.hitter))
             {
                 if (hurtEventData.hitter == "cannonball")
                     Stun();
@@ -1190,20 +1251,20 @@ namespace CarcassEnemy
             int projectilesRemaining = Parameters.shakeProjectileCount;
             float timerPerProjectile = timer / projectilesRemaining;
 
-            while(projectilesRemaining > 0)
+            while (projectilesRemaining > 0)
             {
                 yield return new WaitForSeconds(timerPerProjectile);
                 GameObject spread = new GameObject();
                 ProjectileSpread spr = spread.AddComponent<ProjectileSpread>();
                 spr.dontSpawn = true;
-                spr.timeUntilDestroy = Parameters.shakeProjectileBurstLengthInSeconds*2f;
+                spr.timeUntilDestroy = Parameters.shakeProjectileBurstLengthInSeconds * 2f;
 
-                int projectileCount = (IsEnraged) ? Parameters.enrageBlueProjectileCount : Parameters.shakeProjectileGroup;
+                int projectileCount = (m_isEnraged) ? Parameters.enrageBlueProjectileCount : Parameters.shakeProjectileGroup;
 
-                for(int i=0;i<projectileCount;i++)
+                for (int i = 0; i < projectileCount; i++)
                 {
-                    Projectile proj = FireTrackingProjectileHalo(); 
-                    if(proj != null)
+                    Projectile proj = FireTrackingProjectileHalo();
+                    if (proj != null)
                     {
                         proj.transform.parent = spr.transform;
                         proj.spreaded = true;
@@ -1228,7 +1289,7 @@ namespace CarcassEnemy
             {
                 yield return new WaitForSeconds(Parameters.barrageAttackProjectileDelay);
                 Projectile proj = FireTrackingProjectileSpherical();
-                if(proj != null)
+                if (proj != null)
                 {
                     proj.transform.parent = spr.transform;
                     proj.spreaded = true;
@@ -1242,11 +1303,11 @@ namespace CarcassEnemy
         private IEnumerator EnragedCarpetBomb()
         {
             float timer = Parameters.carpetBombLength;
-            float projectileCountf = timer / (Parameters.carpetBombProjectileDelay+Mathf.Epsilon); //DBZ error prevent
+            float projectileCountf = timer / (Parameters.carpetBombProjectileDelay + Mathf.Epsilon); //DBZ error prevent
             float projectileDelay = Parameters.carpetBombProjectileDelay;
             int projectileCount = Mathf.FloorToInt(projectileCountf);
 
-            while(projectileCount > 0)
+            while (projectileCount > 0)
             {
                 yield return new WaitForSeconds(projectileDelay);
                 FireExplosiveProjectile();
@@ -1269,7 +1330,7 @@ namespace CarcassEnemy
             Func<bool> func = () =>
             {
                 float currentAnimTime = Components.Animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
-                if(lastTime < currentAnimTime)
+                if (lastTime < currentAnimTime)
                 {
                     lastTime = currentAnimTime;
                 }
@@ -1375,7 +1436,7 @@ namespace CarcassEnemy
 
             if (!gore.TryGetComponent<Bloodsplatter>(out Bloodsplatter bloodSplatter))
                 return;
-         
+
             ParticleSystem.CollisionModule collision = bloodSplatter.GetComponent<ParticleSystem>().collision;
             if (hurtData.hitter == "shotgun" || hurtData.hitter == "shotgunzone" || hurtData.hitter == "explosion")
             {
@@ -1398,7 +1459,7 @@ namespace CarcassEnemy
         {
             if (hurtData.hitter == "enemy")
                 return;
-            
+
             StyleCalculator scalc = MonoSingleton<StyleCalculator>.Instance;
 
             if (health <= 0f)
@@ -1454,9 +1515,45 @@ namespace CarcassEnemy
             return position;
         }
 
+        private void SetDroneTarget(Drone drone, EnemyTarget target)
+        {
+            try
+            {
+                FieldInfo droneEIDField = typeof(Drone).GetField("eid", BindingFlags.NonPublic | BindingFlags.Instance);
+                EnemyIdentifier droneEID = droneEIDField.GetValue(drone) as EnemyIdentifier;
+                droneEID.target = target;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+
+
+
+            if (drone.TryGetComponent<DroneFlesh>(out DroneFlesh droneFlesh))
+            {
+                try
+                {
+                    FieldInfo droneFleshEIDField = typeof(DroneFlesh).GetField("eid", BindingFlags.NonPublic | BindingFlags.Instance);
+                    EnemyIdentifier droneFleshEID = droneFleshEIDField.GetValue(droneFlesh) as EnemyIdentifier;
+                    droneFleshEID.target = target;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                }
+            }
+        }
+
         public void SetTarget(Transform target)
         {
-            this.target = target;
+            Components.EnemyIdentifier.target = new EnemyTarget(target);
+
+            //Set the target for our eyes.
+            foreach (Drone d in spawnedEyes)
+            {
+                SetDroneTarget(d, this.target);
+            }
         }
 
         private bool TargetLineOfSightCheck()
@@ -1506,5 +1603,203 @@ namespace CarcassEnemy
             DestroyAllEyes();
             DestroyAllSigils();
         }
+
+        #region ALTER
+
+        public string alterKey => "carcass";
+
+        public string alterCategoryName => "Carcass";
+
+        AlterOption<bool>[] IAlterOptions<bool>.options
+        {
+            get
+            {
+                return new AlterOption<bool>[]
+                {
+                    new AlterOption<bool>()
+                    {
+                        name = "Enraged",
+                        value = isEnraged,
+                        callback = (value) => { SetEnraged(value); },
+                        key = "enraged",
+                    },
+                    new AlterOption<bool>()
+                    {
+                        name = "Disable Death Sequence",
+                        value = disableDeathSequence,
+                        callback = (value) => { disableDeathSequence = value; },
+                        key = "disableDeathSequence",
+                    },
+                    new AlterOption<bool>()
+                    {
+                        name = "Enable Enraged Wild Attacks",
+                        value = Parameters.enableEnrageWildAttacks,
+                        callback = (value) => { Parameters.enableEnrageWildAttacks = value; },
+                        key = "enableEnrageWildAttacks"
+                    }
+                };
+            }
+        }
+
+        AlterOption<float>[] IAlterOptions<float>.options
+        {
+            get
+            {
+                return new AlterOption<float>[]
+                {
+                    new AlterOption<float>()
+                    {
+                        key = "maxHealth",
+                        name = "<size=5>Max Health</size>",
+                        value = Parameters.maxHealth,
+                        callback = (value) => { Parameters.maxHealth = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "eyeHealth",
+                        name = "<size=5>Eye Health</size>",
+                        value = Parameters.eyeHealth,
+                        callback = (value) => { Parameters.eyeHealth = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "eyeHealPerEye",
+                        name = "<size=5>Healing Per Eye</size>",
+                        value = Parameters.eyeHealPerEye,
+                        callback = (value) => { Parameters.eyeHealPerEye = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "eyeHealDelay",
+                        name = "<size=5>Eye Heal Interval</size>",
+                        value = Parameters.eyeHealDelay,
+                        callback = (value) => { Parameters.eyeHealDelay = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "eyeSpawnCooldown",
+                        name = "<size=5>Eye Spawn Cooldown</size>",
+                        value = Parameters.eyeSpawnCooldown,
+                        callback = (value) => { Parameters.eyeSpawnCooldown = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "attackDelay",
+                        name = "<size=5>Attack Delay</size>",
+                        value = Parameters.attackDelay,
+                        callback = (value) => { Parameters.attackDelay = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "stunDamageMultiplier",
+                        name = "<size=5>Stun Bonus Damage Multiplier</size>",
+                        value = Parameters.stunDamageMultiplier,
+                        callback = (value) => { Parameters.stunDamageMultiplier = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "dodgeCooldownTime",
+                        name = "<size=5>Dodge Cooldown Length</size>",
+                        value = Parameters.dodgeCooldownTime,
+                        callback = (value) => { Parameters.dodgeCooldownTime = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "hookBiteDelay",
+                        name = "<size=5>Hook Bite Delay</size>",
+                        value = Parameters.hookBiteDelay,
+                        callback = (value) => { Parameters.hookCooldown = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "hookPlayerCooldown",
+                        name = "<size=5>Hook Cooldown After Bite</size>",
+                        value = Parameters.hookPlayerCooldown,
+                        callback = (value) => { Parameters.hookPlayerCooldown = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "shakeProjectileBurstLength",
+                        name = "<size=5>Shake Attack Length</size>",
+                        value = Parameters.shakeProjectileBurstLengthInSeconds,
+                        callback = (value) => { Parameters.shakeProjectileBurstLengthInSeconds = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "enrageLength",
+                        name = "<size=5>Enrage Length</size>",
+                        value = Parameters.enrageLength,
+                        callback = (value) => { Parameters.enrageLength = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "enrageSpeedMultiplier",
+                        name = "<size=5>Enraged Speed Multiplier</size>",
+                        value = Parameters.enragedSpeedMultiplier,
+                        callback = (value) => { Parameters.enragedSpeedMultiplier = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "enrageAttackTimerMultiplier",
+                        name = "<size=5>Enrage Attack Speed Multiplier</size>",
+                        value = Parameters.enrageAttackTimerMultiplier,
+                        callback = (value) => { Parameters.enrageAttackTimerMultiplier = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "carpetBombLength",
+                        name = "<size=5>(WILD) Carpet Bomb Length</size>",
+                        value = Parameters.carpetBombLength,
+                        callback = (value) => { Parameters.carpetBombLength = value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "carpetBombProjectileDelay",
+                        name = "<size=5>(WILD) Carpet Bomb Projectile Delay</size>",
+                        value = Parameters.carpetBombProjectileDelay,
+                        callback = (value) => { Parameters.carpetBombProjectileDelay = value; }
+                    },
+                    //These values should be int but theres an odd bug with the alter menu that doesnt show int values, and shows floats as ints.
+                    new AlterOption<float>()
+                    {
+                        key = "eyeSpawnCount",
+                        name = "<size=5>Eye Spawn Count</size>",
+                        value = Parameters.eyeSpawnCount,
+                        callback = (value) => { Parameters.eyeSpawnCount = (int)value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "shakeProjectileCount",
+                        name = "<size=5>Shake Projectile Count</size>",
+                        value = Parameters.shakeProjectileCount,
+                        callback = (value) => { Parameters.shakeProjectileCount = (int)value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "shakeProjectileGroup",
+                        name = "<size=5>Shake Projectile Group</size>",
+                        value = Parameters.shakeProjectileGroup,
+                        callback = (value) => { Parameters.shakeProjectileGroup = (int) value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "enrageBlueProjectileCount",
+                        name = "<size=5>Enraged Projectile Count</size>",
+                        value = Parameters.enrageBlueProjectileCount,
+                        callback = (value) => { Parameters.enrageBlueProjectileCount = (int) value; }
+                    },
+                    new AlterOption<float>()
+                    {
+                        key = "barrageProjectileCount",
+                        name = "<size=5>(Wild) Barrage Projectile Count</size>",
+                        value = Parameters.barrageProjectileCount,
+                        callback = (value) => { Parameters.barrageProjectileCount = (int) value; }
+                    }
+                };
+            }
+        }
+
+        #endregion
+
     }
 }

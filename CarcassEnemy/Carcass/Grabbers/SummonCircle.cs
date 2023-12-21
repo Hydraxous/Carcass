@@ -1,4 +1,5 @@
 ﻿using CarcassEnemy.Assets;
+using Logic;
 using System.Collections;
 using ULTRAKILL.Cheats;
 using UnityEngine;
@@ -26,12 +27,15 @@ namespace CarcassEnemy
         private bool activated;
 
         private Transform target;
-
-       
+        private bool targetIsPlayer;
 
         public void SetTarget(Transform target)
         {
             this.target = target;
+            targetIsPlayer = false;
+
+            if(target != null)
+                targetIsPlayer = target.GetComponentInParent<NewMovement>() != null;
         }
 
         public void SetLifeTime(float seconds)
@@ -120,6 +124,9 @@ namespace CarcassEnemy
             if (dying)
                 return;
 
+            if (target == null)
+                return;
+
             Vector3 targetPosition = target.position;
             Vector3 pos = transform.position;
 
@@ -140,8 +147,12 @@ namespace CarcassEnemy
             float randomAngle = UnityEngine.Random.value * 360f;
             Quaternion spawnRotation = Quaternion.Euler(0, randomAngle, 0);
             GameObject newArm = GameObject.Instantiate(grabbyHandPrefab, spawnPosition, spawnRotation);
-            GrabbyArm arm = newArm.GetComponent<GrabbyArm>();
-            arm.SetOwner(owner);
+
+            if(newArm.TryGetComponent<GrabbyArm>(out GrabbyArm arm))
+            {
+                arm.SetOwner(owner);
+                arm.SetTarget(target);
+            }
         }
 
         private IEnumerator Shrink()
@@ -168,24 +179,26 @@ namespace CarcassEnemy
         {
             this.owner = owner;
         }
+
         private void OnTriggerEnter(Collider col)
         {
-            if (!col.CompareTag("Player"))
+            if (!CheckForDamagable(col))
                 return;
 
-            targetInRange = true;
             activated = true;
             Attack();
         }
 
-        private void OnTriggerExit(Collider col)
+        private bool CheckForDamagable(Collider col)
         {
-            if (!col.CompareTag("Player"))
-                return;
+            if (col.CompareTag("Player"))
+                return true;
 
-            targetInRange = false;
+            if (!targetIsPlayer && col.CompareTag("Enemy"))
+                return true;
+
+            return false;
         }
-
-        private bool targetInRange;
+      
     }
 }
