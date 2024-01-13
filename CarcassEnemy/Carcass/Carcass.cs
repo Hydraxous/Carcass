@@ -15,6 +15,7 @@ namespace CarcassEnemy
     public class Carcass : MonoBehaviour, IEnemy, IEnrage, IAlter, IAlterOptions<bool>, IAlterOptions<float>
     {
         //References
+        [SerializeField] private float maxHealth = 50f;
         [SerializeField] private CarcassComponents components;
         [SerializeField] private CarcassParametersAsset serializedParameters;
         [SerializeField] private bool disableDeathSequence;
@@ -79,8 +80,8 @@ namespace CarcassEnemy
         private void Awake()
         {
             Patcher.QueryInstance();
-            health = Parameters.maxHealth;
-            Components.Machine.health = Parameters.maxHealth;
+            health = maxHealth;
+            Components.Machine.health = maxHealth;
             foreach (GameObject go in components.Hitboxes)
             {
                 Rigidbody rb = go.AddComponent<Rigidbody>();
@@ -389,16 +390,20 @@ namespace CarcassEnemy
 
             if (healCooldownTimer <= 0f)
                 if (spawnedEyes.Count > 0)
-                    if (health < Parameters.lowHealthThreshold * Parameters.maxHealth)
+                    if (health < Parameters.lowHealthThreshold * maxHealth)
                         attackPool.Add(StartHealing);
 
             //In range and higher up than the player
             //if (lateralDistance < Parameters.spinMaxRange && verticalDistance < 0 && hasLineOfSight)
+            bool cielingTooCloseForSpin = Physics.Raycast(Components.ProjectileLobPoint.position, Vector3.up, out RaycastHit cielingHit, 3f, LayerMaskDefaults.Get(LMD.Environment));
 
-            if (m_isEnraged && Parameters.enableEnrageWildAttacks)
-                attackPool.Add(CarpetBomb);
-            else if (hasLineOfSight)
-                attackPool.Add(SpinAttack);
+            if (!cielingTooCloseForSpin)
+            {
+                if (m_isEnraged && Parameters.enableEnrageWildAttacks)
+                    attackPool.Add(CarpetBomb);
+                else if (hasLineOfSight)
+                    attackPool.Add(SpinAttack);
+            }
 
             if ((verticalDistance < 0f || !hasLineOfSight || m_isEnraged) && (activeSigils.Count == 0 || m_isEnraged))
                 attackPool.Add(SummonSigil);
@@ -658,7 +663,7 @@ namespace CarcassEnemy
             if (isDead)
                 return;
 
-            health = Mathf.Clamp(health + amount, 0f, Parameters.maxHealth);
+            health = Mathf.Clamp(health + amount, 0f, maxHealth);
 
             if (health <= 0f)
             {
@@ -790,7 +795,6 @@ namespace CarcassEnemy
 
             GetComponentInParent<ActivateNextWave>()?.AddDeadEnemy();
         }
-
 
         private void Die()
         {
@@ -926,7 +930,7 @@ namespace CarcassEnemy
             GameObject eyeObject = GameObject.Instantiate(eyePrefab, position, Quaternion.identity);
 
             if (gz != null)
-                eyeObject.transform.SetParent(gz.transform);
+                eyeObject.transform.SetParent(gz.transform, true);
 
             if (eyeObject.TryGetComponent<Drone>(out Drone drone))
             {
@@ -977,6 +981,10 @@ namespace CarcassEnemy
 
             GameObject newSigil = GameObject.Instantiate(Components.SummonCirclePrefab);
 
+            GoreZone gz = GoreZone.ResolveGoreZone(transform);
+            if (gz != null)
+                newSigil.transform.SetParent(gz.transform, true);
+
             if (newSigil.TryGetComponent<SummonCircle>(out SummonCircle summonCircle))
             {
                 summonCircle.SetTarget(target.targetTransform);
@@ -1011,6 +1019,11 @@ namespace CarcassEnemy
             Vector3 direction = tf.forward;
 
             GameObject projectileObject = GameObject.Instantiate<GameObject>(prefab, position, Quaternion.LookRotation(direction));
+
+            GoreZone gz = GoreZone.ResolveGoreZone(transform);
+            if (gz != null)
+                projectileObject.transform.SetParent(gz.transform, true);
+
             if (projectileObject.TryGetComponent<Projectile>(out Projectile projectile))
             {
                 projectile.target = target;
@@ -1034,6 +1047,10 @@ namespace CarcassEnemy
                 return null;
 
             GameObject projectileGameObject = GameObject.Instantiate(prefab, position, Quaternion.LookRotation(position - Components.CenterMass.position));
+
+            GoreZone gz = GoreZone.ResolveGoreZone(transform);
+            if (gz != null)
+                projectileGameObject.transform.SetParent(gz.transform, true);
 
             if (projectileGameObject.TryGetComponent<Projectile>(out Projectile projectile))
             {
@@ -1069,6 +1086,10 @@ namespace CarcassEnemy
             position += offset * Parameters.shakeProjectileOriginRadius;
 
             GameObject projectileGameObject = GameObject.Instantiate(prefab, position, Quaternion.LookRotation(position - Components.CenterMass.position));
+
+            GoreZone gz = GoreZone.ResolveGoreZone(transform);
+            if (gz != null)
+                projectileGameObject.transform.SetParent(gz.transform, true);
 
             if (projectileGameObject.TryGetComponent<Projectile>(out Projectile projectile))
             {
@@ -1170,7 +1191,7 @@ namespace CarcassEnemy
             Components.Machine.health = health;
 
             //Enrage at "low health"
-            float lowHealth = Parameters.maxHealth * Parameters.lowHealthThreshold;
+            float lowHealth = maxHealth * Parameters.lowHealthThreshold;
             if (health < lowHealth && lastHealth >= lowHealth)
             {
                 SetEnraged(true);
@@ -1255,6 +1276,11 @@ namespace CarcassEnemy
             {
                 yield return new WaitForSeconds(timerPerProjectile);
                 GameObject spread = new GameObject();
+                
+                GoreZone gz = GoreZone.ResolveGoreZone(transform);
+                if (gz != null)
+                    spread.transform.SetParent(gz.transform);
+
                 ProjectileSpread spr = spread.AddComponent<ProjectileSpread>();
                 spr.dontSpawn = true;
                 spr.timeUntilDestroy = Parameters.shakeProjectileBurstLengthInSeconds * 2f;
@@ -1281,6 +1307,10 @@ namespace CarcassEnemy
             float timer = Parameters.barrageAttackLength;
             int projectilesRemaining = Parameters.barrageProjectileCount;
             GameObject spread = new GameObject();
+            GoreZone gz = GoreZone.ResolveGoreZone(transform);
+            if (gz != null)
+                spread.transform.SetParent(gz.transform);
+
             ProjectileSpread spr = spread.AddComponent<ProjectileSpread>();
             spr.dontSpawn = true;
             spr.timeUntilDestroy = (Parameters.barrageAttackProjectileDelay * Parameters.barrageProjectileCount) + Parameters.barrageAttackLength;
@@ -1651,8 +1681,8 @@ namespace CarcassEnemy
                     {
                         key = "maxHealth",
                         name = "<size=5>Max Health</size>",
-                        value = Parameters.maxHealth,
-                        callback = (value) => { Parameters.maxHealth = value; }
+                        value = maxHealth,
+                        callback = (value) => { maxHealth = value; }
                     },
                     new AlterOption<float>()
                     {

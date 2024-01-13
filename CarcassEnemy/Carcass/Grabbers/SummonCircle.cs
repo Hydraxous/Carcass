@@ -148,6 +148,10 @@ namespace CarcassEnemy
             Quaternion spawnRotation = Quaternion.Euler(0, randomAngle, 0);
             GameObject newArm = GameObject.Instantiate(grabbyHandPrefab, spawnPosition, spawnRotation);
 
+            GoreZone gz = GoreZone.ResolveGoreZone(transform);
+            if (gz != null)
+                newArm.transform.SetParent(gz.transform, true);
+
             if(newArm.TryGetComponent<GrabbyArm>(out GrabbyArm arm))
             {
                 arm.SetOwner(owner);

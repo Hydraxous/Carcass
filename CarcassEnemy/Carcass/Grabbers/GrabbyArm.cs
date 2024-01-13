@@ -61,6 +61,10 @@ namespace CarcassEnemy
             {
                 GameObject newOrb = GameObject.Instantiate(healOrbPrefab, transform.position, Quaternion.identity);
 
+                GoreZone gz = GoreZone.ResolveGoreZone(transform);
+                if(gz != null)
+                    newOrb.transform.SetParent(gz.transform,true);
+
                 if (owner != null)
                     if (newOrb.TryGetComponent<CarcassHealOrb>(out CarcassHealOrb orb))
                         orb.SetOwner(owner);
