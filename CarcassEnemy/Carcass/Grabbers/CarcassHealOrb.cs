@@ -38,14 +38,10 @@ namespace CarcassEnemy
 
         public void SetOwner(Carcass owner)
         {
-            if (this.owner != null)
-                owner.OnDeath -= Owner_OnDeath;
-
             this.owner = owner;
 
             if (owner != null)
             {
-                owner.OnDeath += Owner_OnDeath;
                 SetTarget(owner.Components.CenterMass);
             }
 
@@ -54,13 +50,17 @@ namespace CarcassEnemy
             velocity = direction;
         }
 
-        private void Owner_OnDeath(Carcass obj)
-        {
-            Die();
-        }
-
         private void Update()
         {
+            if(owner != null)
+            {
+                if(owner.Dead)
+                {
+                    Die();
+                    return;
+                }
+            }
+
             if(targetSet && target == null)
             {
                 Die();
@@ -105,12 +105,5 @@ namespace CarcassEnemy
             
             Die();
         }
-
-        private void OnDestroy()
-        {
-            if(owner != null)
-                owner.OnDeath -= Owner_OnDeath;
-        }
-
     }
 }

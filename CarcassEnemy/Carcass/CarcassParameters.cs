@@ -6,7 +6,6 @@ namespace CarcassEnemy
     public class CarcassParameters
     {
         //Health
-        public float maxHealth = 80f;
         public float lowHealthThreshold = 0.4f;
         public float healCooldown = 9f;
 
